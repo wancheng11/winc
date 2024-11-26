@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>订单详情</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #fff;
+            padding: 15px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .back-btn {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: none;
+            color: #666;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .order-status {
+            background: #fff;
+            margin: 15px;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .status-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .status-value {
+            font-size: 14px;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 12px;
+            background: #f0f0f0;
+        }
+
+        .status-value.pending {
+            color: #FF6B6B;
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .status-value.waiting {
+            color: #2196F3;
+            background: rgba(33, 150, 243, 0.1);
+        }
+
+        .status-value.completed {
+            color: #4CAF50;
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .status-value.refunded {
+            color: #9E9E9E;
+            background: rgba(158, 158, 158, 0.1);
+        }
+
+        .order-info {
+            background: #fff;
+            margin: 15px;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 14px;
+            align-items: center;
+        }
+
+        .info-label {
+            color: #666;
+            display: flex;
+            align-items: center;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .contact-service {
+            margin: 15px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .service-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .service-btn:active {
+            transform: scale(0.98);
+        }
+
+        .order-actions {
+            margin: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            border: 1px solid #FF6B6B;
+            border-radius: 15px;
+            font-size: 13px;
+            cursor: pointer;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .action-btn.primary {
+            background: #FF6B6B;
+            color: white;
+        }
+
+        .action-btn.secondary {
+            background: white;
+            color: #FF6B6B;
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 禁止页面左右滑动和缩放 */
+        html, body {
+            overflow-x: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
+        }
+
+        /* 主容器样式 */
+        .main-container {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: relative;
+            -webkit-overflow-scrolling: touch;
+            background: #f5f5f5;
+        }
+
+        /* 修复样式闭合 */
+        .reschedule-actions button {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .cancel-btn {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .confirm-btn {
+            background: #FF6B6B;
+            color: white;
+        }
+
+        .reschedule-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .reschedule-content {
+            background: white;
+            width: 90%;
+            max-width: 320px;
+            border-radius: 12px;
+            padding: 20px;
+            animation: modalSlideUp 0.3s ease;
+        }
+
+        .reschedule-form {
+            margin: 20px 0;
+        }
+
+        .form-item {
+            margin-bottom: 15px;
+        }
+
+        .form-item label {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-item input,
+        .form-item select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-note {
+            font-size: 12px;
+            color: #FF6B6B;
+            margin-top: 10px;
+        }
+
+        .reschedule-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .reschedule-actions button {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .cancel-btn {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .confirm-btn {
+            background: #FF6B6B;
+            color: white;
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* 修改图标样式 */
+        .info-label .material-icons {
+            vertical-align: middle;
+            margin-right: 4px;
+        }
+
+        /* 添加手势返回区域样式 */
+        .slide-back-area {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 20px;
+            z-index: 1000;
+        }
+
+        /* 修改复选框样式 */
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .order-actions {
+            margin: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .action-btn {
+            padding: 12px 24px;
+            border: 1px solid #FF6B6B;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            min-width: 100px;
+        }
+
+        .action-btn.secondary {
+            background: white;
+            color: #FF6B6B;
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        .refund-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .refund-content {
+            background: white;
+            width: 90%;
+            max-width: 320px;
+            border-radius: 16px;
+            padding: 20px;
+            animation: slideUp 0.3s ease;
+        }
+
+        .refund-content h3 {
+            text-align: center;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .refund-details {
+            background: #f8f8f8;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .refund-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .refund-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .refund-item.total {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        .refund-note {
+            background: #FFF3E0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #FF9800;
+        }
+
+        .refund-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .refund-actions button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 20px;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .cancel-btn {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .confirm-btn {
+            background: #FF6B6B;
+            color: white;
+        }
+
+        .confirm-btn:active {
+            transform: scale(0.98);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* 修改改签弹窗样式 */
+        .booking-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .booking-content {
+            background: white;
+            width: 90%;
+            max-width: 320px;
+            border-radius: 12px;
+            padding: 20px;
+            animation: modalSlideUp 0.3s ease;
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="order-status">
+            <div class="status-header">
+                <span class="status-label">
+                    <i class="material-icons" style="color: #FF6B6B; font-size: 16px; margin-right: 4px;">fiber_manual_record</i>
+                    订单状态
+                </span>
+                <span class="status-value" id="orderStatus">加载中...</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="material-icons" style="color: #FF6B6B; font-size: 16px; margin-right: 4px;">receipt</i>
+                    订单号
+                </span>
+                <span class="info-value" id="orderId">加载中...</span>
+            </div>
+        </div>
+
+        <div class="order-info">
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="material-icons" style="color: #FF6B6B; font-size: 16px; margin-right: 4px;">category</i>
+                    服务项目
+                </span>
+                <span class="info-value" id="service">加载中...</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="material-icons" style="color: #FF6B6B; font-size: 16px; margin-right: 4px;">place</i>
+                    预约地点
+                </span>
+                <span class="info-value" id="destination">加载中...</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="material-icons" style="color: #FF6B6B; font-size: 16px; margin-right: 4px;">event</i>
+                    预约日期
+                </span>
+                <span class="info-value" id="date">加载中...</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="material-icons" style="color: #FF6B6B; font-size: 16px; margin-right: 4px;">person</i>
+                    陪玩性
+                </span>
+                <span class="info-value" id="gender">加载中...</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="material-icons" style="color: #FF6B6B; font-size: 16px; margin-right: 4px;">schedule</i>
+                    服务时长
+                </span>
+                <span class="info-value" id="duration">加载中...</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="material-icons" style="color: #FF6B6B; font-size: 16px; margin-right: 4px;">access_time</i>
+                    服务时间
+                </span>
+                <span class="info-value" id="serviceTime">加载中...</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="material-icons" style="color: #FF6B6B; font-size: 16px; margin-right: 4px;">payment</i>
+                    服务费用
+                </span>
+                <span class="info-value" id="price" style="color: #FF6B6B;">加载中...</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="material-icons" style="color: #FF6B6B; font-size: 16px; margin-right: 4px;">person_pin</i>
+                    陪玩昵称
+                </span>
+                <span class="info-value" id="peiwanName">加载中...</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="material-icons" style="color: #FF6B6B; font-size: 16px; margin-right: 4px;">badge</i>
+                    陪玩工号
+                </span>
+                <span class="info-value" id="peiwanId">加载中...</span>
+            </div>
+        </div>
+
+        <div class="contact-service">
+            <button class="service-btn" onclick="contactService()">
+                <i class="material-icons">headset_mic</i>
+                联系客服
+            </button>
+        </div>
+
+        <div class="order-actions">
+            <button onclick="applyRefund()" 
+                    style="flex: 1; padding: 10px; border: 1px solid #FF6B6B; background: #fff; border-radius: 8px; color: #FF6B6B; cursor: pointer;">
+                退款
+            </button>
+            <button onclick="handleRebook()" 
+                    style="flex: 1; padding: 10px; border: 1px solid #FF6B6B; background: #fff; border-radius: 8px; color: #FF6B6B; cursor: pointer;">
+                改签
+            </button>
+            <button onclick="window.location.href='select-player.html'" 
+                    style="flex: 1; padding: 10px; border: 1px solid #FF6B6B; background: #fff; border-radius: 8px; color: #FF6B6B; cursor: pointer;">
+                选择陪玩
+            </button>
+        </div>
+
+        <!-- 添加手势返回区域 -->
+        <div class="slide-back-area"></div>
+    </div>
+
+    <script>
+        // 页面加载时获取订单信息
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderId = urlParams.get('orderId');
+            
+            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+            const order = orders.find(o => o.orderId === orderId);
+            
+            if (order) {
+                // 更新订单状态样式
+                const statusElement = document.getElementById('orderStatus');
+                statusElement.textContent = order.status;
+                
+                // 根据不同状态设置不同的颜色
+                switch(order.status) {
+                    case '待约':
+                        statusElement.style.color = '#2196F3';  // 蓝色
+                        break;
+                    case '待服务':
+                        statusElement.style.color = '#FF9800';  // 橙色
+                        break;
+                    case '服务中':
+                        statusElement.style.color = '#4CAF50';  // 绿色
+                        break;
+                    case '已完成':
+                        statusElement.style.color = '#9E9E9E';  // 灰色
+                        break;
+                    case '退款中':
+                        statusElement.style.color = '#F44336';  // 红色
+                        break;
+                    case '已退款':
+                        statusElement.style.color = '#9C27B0';  // 紫色
+                        break;
+                    default:
+                        statusElement.style.color = '#333';     // 默认颜色
+                }
+                
+                // 如果订单状态是退款中或已退款，禁用所有操作按钮
+                if (order.status === '退款中' || order.status === '已退款') {
+                    const actionButtons = document.querySelectorAll('.order-actions button');
+                    actionButtons.forEach(button => {
+                        button.style.backgroundColor = '#ccc';
+                        button.style.borderColor = '#ccc';
+                        button.style.color = '#666';
+                        button.style.cursor = 'not-allowed';
+                        button.disabled = true;
+                        button.onclick = null;  // 移除点击事件
+                    });
+                }
+                
+                // 更新服务时间显示
+                document.getElementById('serviceTime').textContent = order.serviceTime || '--';
+                
+                // 更新订单信息
+                document.getElementById('orderId').textContent = order.orderId;
+                document.getElementById('service').textContent = order.service;
+                document.getElementById('destination').textContent = order.destination;
+                document.getElementById('date').textContent = order.date;
+                document.getElementById('gender').textContent = order.gender;
+                document.getElementById('duration').textContent = order.duration;
+                document.getElementById('price').textContent = order.price;
+                document.getElementById('serviceTime').textContent = order.serviceTime; // 确保显示服务时间
+                
+                // 更新陪玩信息
+                if (order.status !== '预约中' && order.status !== '已退款') {
+                    const peiwanId = generatePeiwanId();
+                    document.getElementById('peiwanId').textContent = peiwanId;
+                    document.getElementById('peiwanName').textContent = generatePeiwanName(order.service);
+                    // 更新按钮显示
+                    updateActionButtons(order.status);
+                } else {
+                    document.getElementById('peiwanId').textContent = '待分配';
+                    document.getElementById('peiwanName').textContent = '待分配';
+                    // 更新按显示
+                    updateActionButtons(order.status);
+                }
+
+                // 检查是否有加时记录，添加加时信息容器
+                if (order.addTimeInfo) {
+                    // 创建加时信息容器
+                    const addTimeContainer = document.createElement('div');
+                    addTimeContainer.className = 'order-info';
+                    addTimeContainer.style.marginTop = '16px';
+                    addTimeContainer.innerHTML = `
+                        <div style="margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0;">
+                            <span style="font-size: 15px; font-weight: 500; color: #FF6B6B;">改签后信息</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">原服务时长</span>
+                            <span class="info-value">${order.addTimeInfo.originalDuration}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">加时时长</span>
+                            <span class="info-value" style="color: #FF6B6B;">${order.addTimeInfo.additionalDuration}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">加时费用</span>
+                            <span class="info-value" style="color: #FF6B6B;">${order.addTimeInfo.additionalPrice}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">加时时间</span>
+                            <span class="info-value">${new Date(order.addTimeInfo.addTimeDate).toLocaleString()}</span>
+                        </div>
+                    `;
+                    
+                    // 将加时信息容器插入到原订单信息之后
+                    document.querySelector('.order-info').after(addTimeContainer);
+                    
+                    // 更新原订单显示的服务时长为总时长
+                    document.getElementById('duration').textContent = order.addTimeInfo.totalDuration;
+                }
+
+                // 更新陪玩性别显示，添加颜色
+                const genderElement = document.getElementById('gender');
+                if (order.gender === '女') {
+                    genderElement.style.color = '#FF6B6B';  // 女性显示为粉色
+                    genderElement.textContent = '女';
+                } else if (order.gender === '男') {
+                    genderElement.style.color = '#2196F3';  // 男性显示为蓝色
+                    genderElement.textContent = '男';
+                } else {
+                    genderElement.textContent = order.gender;
+                }
+
+                // 在服务项目和订单号中间添加改签后信息容器
+                const orderInfoContainer = document.querySelector('.order-info');
+                const serviceItem = orderInfoContainer.querySelector('.info-item');
+                
+                // 创建改签后信息容器
+                const rescheduleContainer = document.createElement('div');
+                rescheduleContainer.className = 'order-info';
+                rescheduleContainer.style.marginBottom = '16px';
+                rescheduleContainer.innerHTML = `
+                    <div style="margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0;">
+                        <span style="font-size: 15px; font-weight: 500; color: #FF6B6B;">改签后信息</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i class="material-icons" style="color: #FF6B6B; font-size: 16px;">update</i>
+                            改签时间
+                        </span>
+                        <span class="info-value">${new Date().toLocaleString()}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i class="material-icons" style="color: #FF6B6B; font-size: 16px;">schedule</i>
+                            原服务时长
+                        </span>
+                        <span class="info-value">${order.duration}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i class="material-icons" style="color: #FF6B6B; font-size: 16px;">add</i>
+                            加时时长
+                        </span>
+                        <span class="info-value" style="color: #FF6B6B;">${order.addTimeInfo ? order.addTimeInfo.additionalDuration : '--'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i class="material-icons" style="color: #FF6B6B; font-size: 16px;">payment</i>
+                            加时费用
+                        </span>
+                        <span class="info-value" style="color: #FF6B6B;">${order.addTimeInfo ? order.addTimeInfo.additionalPrice : '--'}</span>
+                    </div>
+                `;
+                
+                // 将改签后信息容器插入到服务项目和订单号之间
+                serviceItem.after(rescheduleContainer);
+            }
+        });
+
+        // 获取状态应的样式类
+        function getStatusClass(status) {
+            switch(status) {
+                case '预约中': return 'pending';
+                case '待服务': return 'waiting';
+                case '已结束': return 'completed';
+                case '已退款': return 'refunded';
+                default: return '';
+            }
+        }
+
+        // 修改订单状态的枚举
+        const OrderStatus = {
+            PENDING: '预约中',
+            WAITING: '待服务',
+            COMPLETED: '已结束',
+            REFUNDING: '退款中',
+            REFUNDED: '已退款'
+        };
+
+        // 修改更新操作按钮的函数
+        function updateActionButtons(status) {
+            const actionsContainer = document.getElementById('orderActions');
+            let buttonsHtml = '';
+            
+            switch(status) {
+                case OrderStatus.PENDING:
+                    // 约中状态显示"取消预约"和"改签"
+                    buttonsHtml = `
+                        <button class="action-btn secondary" onclick="cancelOrder()">取消预约</button>
+                        <button class="action-btn secondary" onclick="showRescheduleModal()">改签</button>
+                    `;
+                    break;
+                case OrderStatus.WAITING:
+                    // 待服务状态显示"退款"和"改签"
+                    buttonsHtml = `
+                        <button class="action-btn secondary" onclick="applyRefund()">退款</button>
+                        <button class="action-btn secondary" onclick="showRescheduleModal()">改签</button>
+                    `;
+                    break;
+                case OrderStatus.COMPLETED:
+                    // 已结束态不显示任何按钮，只显示联系客服
+                    buttonsHtml = '';
+                    break;
+                case OrderStatus.REFUNDING:
+                    // 退款中状态不显示任何按钮，只显示联系客服
+                    buttonsHtml = '';
+                    break;
+                case OrderStatus.REFUNDED:
+                    // 已退款状态不显示任何按钮，只显示联系客服
+                    buttonsHtml = '';
+                    break;
+            }
+            
+            actionsContainer.innerHTML = buttonsHtml;
+        }
+
+        // 联系客服
+        function contactService() {
+            // 这里可以添加联系服的具体实现
+            alert('正在连接客服，请稍候...');
+        }
+
+        // 修改取消预约函数
+        function cancelOrder() {
+            if (confirm('确定要取消预约？取消后将退还全部费用')) {
+                updateOrderStatus(OrderStatus.REFUNDING);
+            }
+        }
+
+        // 修改申请退款函数
+        function applyRefund() {
+            const currentOrder = getCurrentOrder();
+            if (!currentOrder) return;
+
+            // 获取退款按钮
+            const refundButton = document.querySelector('button[onclick="applyRefund()"]');
+            
+            // 果按钮已经被禁用，直接返回
+            if (refundButton.disabled) {
+                return;
+            }
+
+            // 计算退款手续费
+            const refundInfo = calculateRefundFee(currentOrder);
+            
+            // 创建退款确认弹窗
+            const modal = document.createElement('div');
+            modal.className = 'refund-modal';
+            modal.innerHTML = `
+                <div class="refund-content">
+                    <h3>
+                        <i class="material-icons" style="color: #FF6B6B;">assignment_return</i>
+                        退款确认
+                    </h3>
+                    <div class="refund-details">
+                        <div class="refund-item">
+                            <span class="label">订单金额</span>
+                            <span class="value">${currentOrder.price}</span>
+                        </div>
+                        <div class="refund-item">
+                            <span class="label">退款比例</span>
+                            <span class="value">${refundInfo.percentage}%</span>
+                        </div>
+                        <div class="refund-item">
+                            <span class="label">手续费</span>
+                            <span class="value" style="color: #FF6B6B;">¥${refundInfo.fee}</span>
+                        </div>
+                        <div class="refund-item total">
+                            <span class="label">实际退款</span>
+                            <span class="value" style="color: #4CAF50; font-weight: bold;">¥${refundInfo.actualRefund}</span>
+                        </div>
+                    </div>
+                    <div class="refund-note">
+                        <i class="material-icons" style="color: #FF9800; font-size: 16px;">info</i>
+                        <span>${refundInfo.message}</span>
+                    </div>
+                    <div class="refund-actions">
+                        <button class="cancel-btn" onclick="this.closest('.refund-modal').remove()">取消</button>
+                        <button class="confirm-btn" onclick="confirmRefund()">确认退款</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            // 禁用退款按钮并改变样式
+            refundButton.style.backgroundColor = '#ccc';
+            refundButton.style.borderColor = '#ccc';
+            refundButton.style.color = '#666';
+            refundButton.style.cursor = 'not-allowed';
+            refundButton.disabled = true;
+            refundButton.onclick = null;  // 移除点击事件
+            
+            // 将按钮状态保存到 localStorage
+            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+            const orderIndex = orders.findIndex(o => o.orderId === currentOrder.orderId);
+            if (orderIndex !== -1) {
+                orders[orderIndex].refundButtonDisabled = true;
+                localStorage.setItem('orders', JSON.stringify(orders));
+            }
+        }
+
+        // 修改计算退款手续费函数
+        function calculateRefundFee(order) {
+            const orderAmount = parseFloat(order.price.replace('¥', ''));
+            const serviceTime = new Date(order.date);
+            const now = new Date();
+            const hoursUntilService = Math.ceil((serviceTime - now) / (1000 * 60 * 60)); // 计算剩余小时数
+            
+            let percentage, message;
+            
+            if (hoursUntilService <= 0) {
+                // 服已开始
+                percentage = 0;
+                message = "服务已开始，不支持退款";
+            } else if (hoursUntilService <= 8) {
+                // 剩余8小时内
+                percentage = 10;
+                message = "距离服务时间不足8小时，退款10%";
+            } else if (hoursUntilService <= 24) {
+                // 剩余24-8小时
+                percentage = 20;
+                message = "距离服务时间24-8小时内，退款20%";
+            } else if (hoursUntilService <= 36) {
+                // 剩余36-24小时
+                percentage = 40;
+                message = "距离服务时间36-24小时内，退款40%";
+            } else if (hoursUntilService <= 72) {
+                // 剩余72-36小时
+                percentage = 40;
+                message = "距离服务时间72-36小时内，退款40%";
+            } else if (hoursUntilService <= 99) {
+                // 剩余99-72小时
+                percentage = 70;
+                message = "距离服务时间99-72小时内，退款70%";
+            } else if (hoursUntilService <= 126) {
+                // 剩余126-100小时
+                percentage = 90;
+                message = "距离服务时间126-100小时内，退款90%";
+            } else {
+                // 超过126小时
+                percentage = 90;
+                message = "距离服务时间大于126小时，退款90%";
+            }
+            
+            const actualRefund = orderAmount * percentage / 100;
+            const fee = orderAmount - actualRefund;
+            
+            return {
+                percentage,
+                fee: fee.toFixed(2),
+                actualRefund: actualRefund.toFixed(2),
+                message
+            };
+        }
+
+        // 加确认退款函数
+        function confirmRefund() {
+            updateOrderStatus(OrderStatus.REFUNDING);
+            document.querySelector('.refund-modal').remove();
+        }
+
+        // 修改更新订单状态函数
+        function updateOrderStatus(newStatus) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderId = urlParams.get('orderId');
+            
+            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+            const orderIndex = orders.findIndex(o => o.orderId === orderId);
+            
+            if (orderIndex !== -1) {
+                orders[orderIndex].status = newStatus;
+                
+                // 如果是退款相关状态，添加退款时间
+                if (newStatus === OrderStatus.REFUNDING || newStatus === OrderStatus.REFUNDED) {
+                    orders[orderIndex].refundTime = new Date().toISOString();
+                }
+                
+                localStorage.setItem('orders', JSON.stringify(orders));
+                location.reload();
+            }
+        }
+
+        // 添加获取当订单函数
+        function getCurrentOrder() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderId = urlParams.get('orderId');
+            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+            return orders.find(o => o.orderId === orderId) || null;
+        }
+
+        // 修改改签功能
+        function showRescheduleModal() {
+            const currentOrder = getCurrentOrder();
+            if (!currentOrder) return;
+
+            const modal = document.createElement('div');
+            modal.className = 'reschedule-modal';
+            modal.innerHTML = `
+                <div class="reschedule-content">
+                    <h3>预约改签</h3>
+                    <div class="reschedule-form">
+                        <div class="form-item">
+                            <label>改签日期</label>
+                            <input type="date" id="newDate" min="${new Date().toISOString().split('T')[0]}" onchange="calculateNewPrice()">
+                        </div>
+                        <div class="form-item">
+                            <label>改签时长</label>
+                            <select id="newDuration" onchange="calculateNewPrice()">
+                                ${generateDurationOptions(currentOrder)}
+                            </select>
+                        </div>
+                        <div class="form-item">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="changePeiwan">
+                                是否换陪玩人员
+                            </label>
+                        </div>
+                        <div class="price-info" style="margin-top: 15px; padding: 12px; background: #f8f8f8; border-radius: 8px;">
+                            <div style="margin-bottom: 8px; color: #666; font-size: 14px;">费用明细</div>
+                            <div class="price-detail" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="color: #666; font-size: 13px;">原订费用：</span>
+                                <span style="color: #666; font-size: 13px;" id="originalPrice">${currentOrder.price}</span>
+                            </div>
+                            <div class="price-detail" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="color: #666; font-size: 13px;">改签费用：</span>
+                                <span style="color: #FF6B6B; font-size: 13px;" id="newPrice">--</span>
+                            </div>
+                            <div class="price-difference" id="priceDifference" style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid #eee; margin-top: 8px;">
+                                <span style="font-size: 14px; font-weight: 500;">费用差额</span>
+                                <span style="font-size: 14px; font-weight: 500;" id="diffAmount">--</span>
+                            </div>
+                        </div>
+                        <div class="form-note" style="margin-top: 12px; color: #999; font-size: 12px;">
+                            * 改签后法恢复原订单信息
+                        </div>
+                    </div>
+                    <div class="reschedule-actions">
+                        <button class="cancel-btn" onclick="this.closest('.reschedule-modal').remove()">取消</button>
+                        <button class="confirm-btn" onclick="submitReschedule()">确认改签</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // 修改计算差价的函数
+        function calculateNewPrice() {
+            const currentOrder = getCurrentOrder();
+            const newDuration = document.getElementById('newDuration').value;
+            if (!currentOrder || !newDuration) return;
+
+            const originalPrice = parseFloat(currentOrder.price.replace('¥', ''));
+            const priceDifference = calculatePriceDifference(currentOrder, newDuration);
+            const newPrice = originalPrice + priceDifference;
+            
+            // 更新价格显示
+            document.getElementById('originalPrice').textContent = `¥${originalPrice}`;
+            document.getElementById('newPrice').textContent = `¥${newPrice}`;
+            
+            const diffElement = document.getElementById('diffAmount');
+            if (priceDifference > 0) {
+                diffElement.textContent = `需补 ¥${priceDifference}`;
+                diffElement.style.color = '#FF6B6B';
+            } else if (priceDifference < 0) {
+                diffElement.textContent = `退 ¥${Math.abs(priceDifference)}`;
+                diffElement.style.color = '#4CAF50';
+            } else {
+                diffElement.textContent = '无需补差价';
+                diffElement.style.color = '#666';
+            }
+        }
+
+        // 修改生成时长选项函数
+        function generateDurationOptions(order) {
+            if (order.service.includes('游') && !order.service.includes('同城')) {
+                // 旅游服（非同城用天数
+                return Array.from({length: 15}, (_, i) => 
+                    `<option value="${i + 1}天">${i + 1}天</option>`
+                ).join('');
+            } else {
+                // 他服务使用小时
+                return Array.from({length: 24}, (_, i) => 
+                    `<option value="${i + 1}小时">${i + 1}小时</option>`
+                ).join('');
+            }
+        }
+
+        // 修改提交改签请求函数
+        function submitReschedule() {
+            const newDate = document.getElementById('newDate').value;
+            const newDuration = document.getElementById('newDuration').value;
+            const changePeiwan = document.getElementById('changePeiwan').checked;
+            
+            if (!newDate || !newDuration) {
+                alert('请填写完整的改签信息');
+                return;
+            }
+
+            const currentOrder = getCurrentOrder();
+            if (!currentOrder) return;
+
+            // 计算差价
+            const priceDifference = calculatePriceDifference(currentOrder, newDuration);
+            
+            // 根据差价决定下一步操作
+            if (priceDifference > 0) {
+                // 需要补差价，创建改签单
+                const rescheduleOrder = {
+                    orderId: `CX${Date.now()}`, // 改签订单号
+                    originalOrderId: currentOrder.orderId,
+                    service: currentOrder.service,
+                    destination: currentOrder.destination,
+                    date: formatDate(new Date(newDate)),
+                    gender: currentOrder.gender,
+                    duration: newDuration,
+                    price: `¥${priceDifference}`,
+                    type: 'reschedule',
+                    changePeiwan: changePeiwan,
+                    status: '待支付'
+                };
+                
+                // 改签订单息
+                localStorage.setItem('currentOrder', JSON.stringify(rescheduleOrder));
+                
+                // 关闭改签弹窗
+                document.querySelector('.reschedule-modal').remove();
+                
+                // 跳转到支付页面
+                window.location.href = 'payment.html?type=reschedule';
+            } else if (priceDifference < 0) {
+                // 需要退还差价
+                if (confirm(`改签后将退还差价 ¥${Math.abs(priceDifference)}，是否继续？`)) {
+                    processReschedule(currentOrder.orderId, newDate, newDuration, changePeiwan, priceDifference);
+                }
+            } else {
+                // 无差价，直接改签
+                processReschedule(currentOrder.orderId, newDate, newDuration, changePeiwan, 0);
+            }
+        }
+
+        // 添加计算差价函
+        function calculatePriceDifference(order, newDuration) {
+            const basePrice = getServiceBasePrice(order.service);
+            const oldDuration = parseInt(order.duration);
+            const newDurationNum = parseInt(newDuration);
+            
+            // 判断是按时还是按天计费
+            const isHourly = order.service === '同城游' || !order.service.includes('游');
+            
+            if (isHourly) {
+                return basePrice * (newDurationNum - oldDuration);
+            } else {
+                // 按天计费的服务
+                const oldDays = parseInt(order.duration);
+                const newDays = parseInt(newDuration);
+                return basePrice * (newDays - oldDays);
+            }
+        }
+
+        // 添加获取服务基础价格函数
+        function getServiceBasePrice(serviceType) {
+            const prices = {
+                '酒吧狂欢': 298,
+                '欢唱派对': 268,
+                '逛街电影': 198,
+                '商务应酬': 298,
+                '剧本杀': 128,
+                '密室逃脱': 128,
+                '桌球助教': 128,
+                '同城游': 268,
+                '跨市游': 998,
+                '跨省游': 1288,
+                '国际游': 1588
+            };
+            return prices[serviceType] || 0;
+        }
+
+        // 添加处理改签函数
+        function processReschedule(orderId, newDate, newDuration, changePeiwan, priceDifference) {
+            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+            const orderIndex = orders.findIndex(o => o.orderId === orderId);
+            
+            if (orderIndex !== -1) {
+                const originalPrice = parseFloat(orders[orderIndex].price.replace('¥', ''));
+                const newPrice = originalPrice + priceDifference;
+                
+                orders[orderIndex] = {
+                    ...orders[orderIndex],
+                    date: formatDate(new Date(newDate)),
+                    duration: newDuration,
+                    price: `¥${newPrice}`,
+                    changePeiwan: changePeiwan,
+                    status: '改签中',
+                    rescheduleTime: new Date().toISOString(),
+                    priceDifference: priceDifference
+                };
+                
+                localStorage.setItem('orders', JSON.stringify(orders));
+                document.querySelector('.reschedule-modal').remove();
+                
+                if (priceDifference < 0) {
+                    alert(`改签成功，差价 ¥${Math.abs(priceDifference)} 将在1-3个工作日内退还到原支付账户`);
+                } else {
+                    alert('改签成功');
+                }
+                
+                location.reload();
+            }
+        }
+
+        // 格式化日期
+        function formatDate(date) {
+            return date.toLocaleDateString('zh-CN', {
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // 添加手势返回功能
+        let startX = 0;
+        let startY = 0;
+        const threshold = 50;
+
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (startX < 50) {
+                const deltaX = e.touches[0].clientX - startX;
+                const deltaY = Math.abs(e.touches[0].clientY - startY);
+                
+                if (deltaX > deltaY && deltaX > 0) {
+                    e.preventDefault();
+                }
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            if (startX < 50) {
+                const deltaX = e.changedTouches[0].clientX - startX;
+                const deltaY = Math.abs(e.changedTouches[0].clientY - startY);
+                
+                if (deltaX > threshold && deltaX > deltaY) {
+                    window.history.back();
+                }
+            }
+        });
+
+        // 添加生成陪玩息的函数
+        function generatePeiwanInfo(serviceType) {
+            // 根据服务类型生成对应的陪玩昵称前缀
+            const prefixes = {
+                '本杀': '剧本',
+                '酒吧狂欢': '酒吧',
+                '欢唱派对': 'KTV',
+                '桌球助教': '球技',
+                '商务应酬': '商务',
+                '逛街电影': '生活',
+                '密室逃脱': '密室',
+                '同城游': '导游',
+                '跨市游': '导游',
+                '跨省游': '导游',
+                '国际游': '导游'
+            };
+
+            const prefix = prefixes[serviceType] || '趣玩';
+            const randomNum = Math.floor(Math.random() * 9000) + 1000;
+            const workerId = `PW${Math.floor(Math.random() * 90000) + 10000}`;
+
+            return {
+                name: `${prefix}_${randomNum}`,
+                id: workerId
+            };
+        }
+
+        // 修改成陪玩工号的函数
+        function generatePeiwanId() {
+            return Math.floor(10000 + Math.random() * 90000).toString(); // 生成5位数字
+        }
+
+        // 添加生成陪玩昵称的函数
+        function generatePeiwanName(serviceType) {
+            const prefixes = {
+                '剧本杀': '剧本',
+                '酒吧狂欢': '酒吧',
+                '欢唱派对': 'KTV',
+                '桌球助教': '球技',
+                '商务应酬': '商务',
+                '逛街电影': '活',
+                '密室逃脱': '密室',
+                '同城游': '导游',
+                '跨市游': '导游',
+                '跨省游': '导游',
+                '国际游': '导游'
+            };
+
+            const prefix = prefixes[serviceType] || '趣玩';
+            const randomNum = Math.floor(Math.random() * 9000) + 1000;
+            return `${prefix}_${randomNum}`;
+        }
+
+        // 修改生成订单号函数
+        function generateOrderId() {
+            // 生成4位随机大写字母
+            const letters = Array.from({length: 4}, () => 
+                String.fromCharCode(65 + Math.floor(Math.random() * 26))
+            ).join('');
+            
+            // 生成19位随机数字
+            const numbers = Array.from({length: 19}, () => 
+                Math.floor(Math.random() * 10)
+            ).join('');
+            
+            return `${letters}${numbers}`;
+        }
+
+        // 修改改签按钮点击处理函数
+        function handleRebook() {
+            const currentOrder = getCurrentOrder();
+            if (!currentOrder) return;
+
+            // 创建改签选项弹窗
+            const modal = document.createElement('div');
+            modal.className = 'booking-modal';
+            modal.innerHTML = `
+                <div class="booking-content" style="text-align: center;">
+                    <h3 style="font-size: 15px;">
+                        <i class="material-icons" style="color: #FF6B6B; font-size: 18px;">autorenew</i>
+                        选择改签类型
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 15px 0;">
+                        <button onclick="handleRebookType('player')" 
+                                style="padding: 10px; border: 1px solid #FF6B6B; background: #fff; border-radius: 6px; color: #FF6B6B; cursor: pointer; font-size: 12px;">
+                            <i class="material-icons" style="font-size: 18px; margin-bottom: 2px;">person</i>
+                            <div>改陪玩</div>
+                        </button>
+                        <button onclick="handleRebookType('date')" 
+                                style="padding: 10px; border: 1px solid #FF6B6B; background: #fff; border-radius: 6px; color: #FF6B6B; cursor: pointer; font-size: 12px;">
+                            <i class="material-icons" style="font-size: 18px; margin-bottom: 2px;">event</i>
+                            <div>改日期</div>
+                        </button>
+                        <button onclick="handleRebookType('duration')" 
+                                style="padding: 10px; border: 1px solid #FF6B6B; background: #fff; border-radius: 6px; color: #FF6B6B; cursor: pointer; font-size: 12px;">
+                            <i class="material-icons" style="font-size: 18px; margin-bottom: 2px;">schedule</i>
+                            <div>加时玩</div>
+                        </button>
+                        <button onclick="handleRebookType('time')" 
+                                style="padding: 10px; border: 1px solid #FF6B6B; background: #fff; border-radius: 6px; color: #FF6B6B; cursor: pointer; font-size: 12px;">
+                            <i class="material-icons" style="font-size: 18px; margin-bottom: 2px;">access_time</i>
+                            <div>改时间</div>
+                        </button>
+                        <button onclick="handleRebookType('service')" 
+                                style="padding: 10px; border: 1px solid #FF6B6B; background: #fff; border-radius: 6px; color: #FF6B6B; cursor: pointer; font-size: 12px;">
+                            <i class="material-icons" style="font-size: 18px; margin-bottom: 2px;">category</i>
+                            <div>改项目</div>
+                        </button>
+                    </div>
+                    <button onclick="this.closest('.booking-modal').remove()" 
+                            style="width: 100%; padding: 8px; border: 1px solid #eee; background: #fff; border-radius: 6px; color: #666; cursor: pointer; font-size: 13px;">
+                        取消
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // 修改检查是否可以加时的函数
+        function canAddTime(order) {
+            // 获取当前时间
+            const now = new Date();
+            
+            // 解析预约日期 (11月29日)
+            const [month, day] = order.date.replace(/[月日]/g, '').match(/\d+/g);
+            
+            // 创建预约日期时间对象
+            const bookingDate = new Date();
+            bookingDate.setFullYear(now.getFullYear());  // 设置当前年份
+            bookingDate.setMonth(parseInt(month) - 1);   // 设置月份 (0-11)
+            bookingDate.setDate(parseInt(day));          // 设置日期
+            bookingDate.setHours(0);                     // 设置为凌晨00:00
+            bookingDate.setMinutes(0);
+            bookingDate.setSeconds(0);
+            bookingDate.setMilliseconds(0);
+            
+            // 获取当前日期（设置为当天凌晨00:00）
+            const today = new Date();
+            today.setHours(0);
+            today.setMinutes(0);
+            today.setSeconds(0);
+            today.setMilliseconds(0);
+            
+            // 如果预约日期小于当前日期，说明是跨年预约，设置为下一年
+            if (bookingDate < today) {
+                bookingDate.setFullYear(now.getFullYear() + 1);
+            }
+            
+            // 如果预约日期等于当前日期，或者预约日期小于当前日期，则允许加时
+            return bookingDate > today;
+        }
+
+        // 改处理改签类型的函数
+        function handleRebookType(type) {
+            const currentOrder = getCurrentOrder();
+            if (!currentOrder) return;
+
+            switch(type) {
+                case 'player':
+                    // 跳转到选择陪玩页面
+                    window.location.href = 'select-player.html';
+                    break;
+                case 'date':
+                    // ���是否可以改签日期
+                    if (canRebookDate(currentOrder)) {
+                        showDatePickerModal(currentOrder);
+                    } else {
+                        showAlert('已超过预约日期或日，无法改签日期。\n如有特殊情况请联系客服处。');
+                    }
+                    break;
+                case 'duration':
+                    // 跳转到加时玩页面，并传递当前订单信息
+                    localStorage.setItem('currentOrder', JSON.stringify(currentOrder));
+                    window.location.href = 'add-time.html';
+                    break;
+                case 'time':
+                    // 显示时间选择弹窗
+                    showTimePickerModal(currentOrder);
+                    break;
+            }
+        }
+
+        // 修改检查是否可以改签日期的函数
+        function canRebookDate(order) {
+            // 获取当前时间
+            const now = new Date();
+            
+            // 解析预约日期 (11月29日)
+            const [month, day] = order.date.replace(/[月日]/g, '').match(/\d+/g);
+            
+            // 创建预约日期时间对象（设置为当天凌晨00:00）
+            const bookingDate = new Date();
+            bookingDate.setFullYear(now.getFullYear());  // 设置当前年份
+            bookingDate.setMonth(parseInt(month) - 1);   // 设置月份 (0-11)
+            bookingDate.setDate(parseInt(day));          // 设置日期
+            bookingDate.setHours(0, 0, 0, 0);           // 设置为凌晨00:00
+            
+            // 获取当前日期（设置为当天凌晨00:00）
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            // 如果预约日期小于当前日期，说明是跨年预约，设置为下一年
+            if (bookingDate < today) {
+                bookingDate.setFullYear(now.getFullYear() + 1);
+            }
+            
+            // 计算日期差（天数）
+            const timeDiff = bookingDate.getTime() - today.getTime();
+            const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+            
+            console.log('预约日期:', bookingDate.toLocaleDateString());
+            console.log('当前日期:', today.toLocaleDateString());
+            console.log('相差天数:', daysDiff);
+            
+            // 只要预约日期在当前日期之后就允许改签
+            return daysDiff >= 0;
+        }
+
+        // 添加提示弹窗函数
+        function showAlert(message) {
+            const modal = document.createElement('div');
+            modal.className = 'booking-modal';
+            modal.innerHTML = `
+                <div class="booking-content" style="text-align: center;">
+                    <div style="margin-bottom: 20px;">
+                        <i class="material-icons" style="font-size: 48px; color: #FF6B6B;">warning</i>
+                    </div>
+                    <div style="color: #333; margin-bottom: 20px; white-space: pre-line;">
+                        ${message}
+                    </div>
+                    <button onclick="this.closest('.booking-modal').remove()" 
+                            style="width: 100%; padding: 10px; background: #FF6B6B; border: none; border-radius: 8px; color: white; cursor: pointer;">
+                        知道了
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // 添加更新订单加时信息的函数
+        function updateOrderAddTimeInfo(originalOrderId, addTimeInfo) {
+            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+            const orderIndex = orders.findIndex(o => o.orderId === originalOrderId);
+            
+            if (orderIndex !== -1) {
+                // 更新原订单的加时信息
+                orders[orderIndex].addTimeInfo = {
+                    additionalDuration: addTimeInfo.additionalDuration,
+                    additionalPrice: addTimeInfo.additionalPrice,
+                    addTimeDate: new Date().toISOString(),
+                    addTimeOrderId: `JD${Date.now()}`
+                };
+                
+                // 保存更新后的订单信息
+                localStorage.setItem('orders', JSON.stringify(orders));
+            }
+        }
+
+        // 修改显示公告详情函数
+        function showNoticeModal(title) {
+            // 根据标题显示不同的内容
+            let content = '';
+            switch(title) {
+                case '《陪玩下单须知》':
+                    content = `
+                        <div class="notice-content-item">
+                            <h4 style="margin-bottom: 15px; color: #333;">下单须知：</h4>
+                            <p style="margin-bottom: 10px; color: #666;">1. 下单前请仔细确认：</p>
+                            <ul style="margin-bottom: 15px; padding-left: 20px; color: #666;">
+                                <li>陪玩人员信息</li>
+                                <li>具体出行日期</li>
+                                <li>陪玩服务时间</li>
+                            </ul>
+                            <p style="margin-bottom: 10px; color: #666;">2. 退款规则：</p>
+                            <ul style="margin-bottom: 15px; padding-left: 20px; color: #666;">
+                                <li>距离陪玩时间<span style="color: #FF6B6B;">7-5天</span>：退款<span style="color: #FF6B6B;">90%</span></li>
+                                <li>距离陪玩时间<span style="color: #FF6B6B;">4-2天</span>：退款<span style="color: #FF6B6B;">70%</span></li>
+                                <li>距离陪玩时间<span style="color: #FF6B6B;">3-1天</span>：退款<span style="color: #FF6B6B;">50%</span></li>
+                                <li>距离陪玩时间剩余8小时内：退款<span style="color: #FF6B6B;">10%</span></li>
+                                <li>服务开始后：不支持退款</li>
+                            </ul>
+                            <p style="margin-bottom: 10px; color: #666;">3. 特别说明：</p>
+                            <ul style="padding-left: 20px; color: #666;">
+                                <li>如因个人原因导致服务无法正常进行</li>
+                                <li>已超过服务时间则无法退款</li>
+                                <li>建议提前5分钟到达约定地点</li>
+                                <li>退款金额将在1-3个工作日内退回支付账户</li>
+                            </ul>
+                        </div>
+                    `;
+                    break;
+                case '《陪玩注意事项》':
+                    content = `
+                        <div class="notice-content-item">
+                            <h4 style="margin-bottom: 15px; color: #333;">陪玩服务注意事项：</h4>
+                            <ul style="padding-left: 20px; color: #666;">
+                                <li style="margin-bottom: 10px;">1. 陪玩服务仅限于公共场所进行，禁止在私密场所进行服务</li>
+                                <li style="margin-bottom: 10px;">2. 禁止进行任何违法违规的活动</li>
+                                <li style="margin-bottom: 10px;">3. 保持良好的沟通礼仪，互相尊重</li>
+                                <li style="margin-bottom: 10px;">4. 如遇不适当的要求，陪玩人员有权拒绝服务</li>
+                                <li style="margin-bottom: 10px;">5. 服务过程中注意人身安全，保管好随身物品</li>
+                                <li>6. 如遇纠纷请及时联系平台客服处理</li>
+                            </ul>
+                        </div>
+                    `;
+                    break;
+            }
+
+            const modal = document.createElement('div');
+            modal.className = 'notice-modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.7);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+            `;
+            modal.innerHTML = `
+                <div class="notice-modal-content" style="background: white; width: 90%; max-width: 320px; border-radius: 12px; padding: 20px;">
+                    <div class="notice-modal-title" style="font-size: 16px; font-weight: 500; color: #333; text-align: center; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+                        ${title}
+                    </div>
+                    <div class="notice-modal-body" style="max-height: 60vh; overflow-y: auto;">
+                        ${content}
+                    </div>
+                    <div class="notice-modal-close">
+                        <button onclick="this.closest('.notice-modal').remove()" 
+                                style="width: 100%; padding: 10px; background: #FF6B6B; border: none; border-radius: 8px; color: white; cursor: pointer; margin-top: 20px;">
+                            我知道了
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+    </script>
+</body>
+</html> 

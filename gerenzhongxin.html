@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>个人中心</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* 用户信息卡片 */
+        .user-card {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+            padding: 15px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 30px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .user-id {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        /* 等级信息 */
+        .level-info {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .level-item {
+            text-align: center;
+        }
+
+        .level-title {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 4px;
+        }
+
+        .level-value {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* 功能菜单 */
+        .menu-section {
+            background: white;
+            border-radius: 12px;
+            margin: 12px;
+            padding: 4px;
+        }
+
+        .menu-title {
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            padding: 8px;
+        }
+
+        .menu-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 4px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .menu-item:active {
+            background: #f5f5f5;
+        }
+
+        .menu-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .menu-icon .material-icons {
+            font-size: 18px;
+        }
+
+        .menu-name {
+            font-size: 11px;
+            color: #666;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        /* 列表菜单 */
+        .list-menu {
+            background: white;
+            border-radius: 12px;
+            margin: 15px;
+        }
+
+        .menu-list-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            gap: 12px;
+            position: relative;
+        }
+
+        .menu-list-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 15px;
+            right: 15px;
+            bottom: 0;
+            height: 1px;
+            background: #f5f5f5;
+        }
+
+        .menu-list-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 17.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .menu-list-text {
+            flex: 1;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .menu-list-arrow {
+            color: #999;
+        }
+
+        /* 渐变背景色 */
+        .bg-1 { background: linear-gradient(135deg, #FF6B6B, #FF8E8E); }
+        .bg-2 { background: linear-gradient(135deg, #4ECDC4, #45B7D1); }
+        .bg-3 { background: linear-gradient(135deg, #A78BFA, #8B5CF6); }
+        .bg-4 { background: linear-gradient(135deg, #F59E0B, #D97706); }
+        .bg-5 { background: linear-gradient(135deg, #10B981, #059669); }
+        .bg-6 { background: linear-gradient(135deg, #3B82F6, #60A5FA); }
+        .bg-7 { background: linear-gradient(135deg, #EC4899, #F472B6); }
+        .bg-8 { background: linear-gradient(135deg, #8B5CF6, #A78BFA); }
+
+        /* 滑动返回区域 */
+        .slide-back-area {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 20px;
+            z-index: 1000;
+        }
+
+        /* 添加VIP标识 */
+        .vip-badge {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            border-radius: 12px;
+            padding: 3px 8px;
+            font-size: 12px;
+            margin-left: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .vip-badge .material-icons {
+            font-size: 14px;
+        }
+
+        /* 等级进度条 */
+        .level-progress {
+            background: rgba(255, 255, 255, 0.2);
+            height: 4px;
+            border-radius: 2px;
+            margin-top: 10px;
+            position: relative;
+        }
+
+        .progress-bar {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: white;
+            border-radius: 2px;
+            width: 60%;
+        }
+
+        /* 钱包余额 */
+        .wallet-balance {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .wallet-balance .material-icons {
+            font-size: 14px;
+        }
+
+        /* 添加头像编辑按钮样式 */
+        .avatar-edit-btn {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 24px;
+            height: 24px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .avatar-edit-btn:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .avatar-edit-btn .material-icons {
+            font-size: 16px;
+        }
+
+        /* 添加头像预览弹窗样式 */
+        .avatar-preview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .avatar-preview-content {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            width: 90%;
+            max-width: 320px;
+        }
+
+        .preview-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .preview-image {
+            width: 200px;
+            height: 200px;
+            border-radius: 100px;
+            margin: 0 auto 20px;
+            overflow: hidden;
+        }
+
+        .preview-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .preview-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .preview-btn {
+            padding: 10px 25px;
+            border-radius: 20px;
+            border: none;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .cancel-btn {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .confirm-btn {
+            background: #FF6B6B;
+            color: white;
+        }
+
+        /* 超小屏幕适配 */
+        @media screen and (max-width: 320px) {
+            .user-avatar {
+                width: 50px;
+                height: 50px;
+                border-radius: 25px;
+            }
+
+            .user-name {
+                font-size: 14px;
+            }
+
+            .user-id {
+                font-size: 11px;
+            }
+
+            .wallet-balance {
+                font-size: 11px;
+                padding: 4px 10px;
+            }
+
+            .level-title {
+                font-size: 11px;
+            }
+
+            .level-value {
+                font-size: 13px;
+            }
+
+            .menu-icon {
+                width: 36px;
+                height: 36px;
+            }
+
+            .menu-icon .material-icons {
+                font-size: 18px;
+            }
+
+            .menu-name {
+                font-size: 10px;
+            }
+        }
+
+        /* 小屏幕适配 */
+        @media screen and (min-width: 321px) and (max-width: 375px) {
+            .user-avatar {
+                width: 55px;
+                height: 55px;
+                border-radius: 27.5px;
+            }
+
+            .user-name {
+                font-size: 15px;
+            }
+
+            .menu-name {
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-back-area"></div>
+
+    <!-- 用户信息卡片 -->
+    <div class="user-card">
+        <div class="wallet-balance">
+            <i class="material-icons">account_balance_wallet</i>
+            <span>余额: ￥888.88</span>
+        </div>
+        
+        <div class="user-info">
+            <div class="user-avatar">
+                <img src="https://s1.imagehub.cc/images/2024/11/08/517863d36cc7513386d28d457636008d.jpeg" alt="用户头像" id="userAvatar">
+                <div class="avatar-edit-btn" onclick="document.getElementById('avatarInput').click()">
+                    <i class="material-icons">photo_camera</i>
+                </div>
+                <input type="file" id="avatarInput" accept="image/*" style="display: none" onchange="handleAvatarChange(event)">
+            </div>
+            <div class="user-details">
+                <div class="user-name">
+                    小甜甜
+                    <span class="vip-badge">
+                        <i class="material-icons">stars</i>
+                        VIP3
+                    </span>
+                </div>
+                <div class="user-id">ID: 888888</div>
+                <div class="level-progress">
+                    <div class="progress-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="level-info">
+            <div class="level-item">
+                <div class="level-title">用户等级</div>
+                <div class="level-value">Lv.8</div>
+            </div>
+            <div class="level-item">
+                <div class="level-title">成长值</div>
+                <div class="level-value">2888</div>
+            </div>
+            <div class="level-item">
+                <div class="level-title">活跃度</div>
+                <div class="level-value">888</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 功能菜单 -->
+    <div class="menu-section">
+        <div class="menu-title">我的服务</div>
+        <div class="menu-grid">
+            <div class="menu-item">
+                <div class="menu-icon bg-1">
+                    <i class="material-icons">receipt_long</i>
+                </div>
+                <span class="menu-name">全部订单</span>
+            </div>
+            <div class="menu-item">
+                <div class="menu-icon bg-2">
+                    <i class="material-icons">pending_actions</i>
+                </div>
+                <span class="menu-name">待付款</span>
+            </div>
+            <div class="menu-item">
+                <div class="menu-icon bg-3">
+                    <i class="material-icons">schedule</i>
+                </div>
+                <span class="menu-name">进行中</span>
+            </div>
+            <div class="menu-item">
+                <div class="menu-icon bg-4">
+                    <i class="material-icons">done_all</i>
+                </div>
+                <span class="menu-name">已完成</span>
+            </div>
+            <div class="menu-item">
+                <div class="menu-icon bg-5">
+                    <i class="material-icons">card_membership</i>
+                </div>
+                <span class="menu-name">会员中心</span>
+            </div>
+            <div class="menu-item">
+                <div class="menu-icon bg-6">
+                    <i class="material-icons">account_balance_wallet</i>
+                </div>
+                <span class="menu-name">我的钱包</span>
+            </div>
+            <div class="menu-item">
+                <div class="menu-icon bg-7">
+                    <i class="material-icons">favorite</i>
+                </div>
+                <span class="menu-name">我的收藏</span>
+            </div>
+            <div class="menu-item">
+                <div class="menu-icon bg-8">
+                    <i class="material-icons">history</i>
+                </div>
+                <span class="menu-name">浏览记录</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 列表菜单 -->
+    <div class="list-menu">
+        <div class="menu-list-item">
+            <div class="menu-list-icon bg-1">
+                <i class="material-icons">verified_user</i>
+            </div>
+            <span class="menu-list-text">陪玩认证</span>
+            <i class="material-icons menu-list-arrow">chevron_right</i>
+        </div>
+        <div class="menu-list-item">
+            <div class="menu-list-icon bg-2">
+                <i class="material-icons">edit</i>
+            </div>
+            <span class="menu-list-text">修改资料</span>
+            <i class="material-icons menu-list-arrow">chevron_right</i>
+        </div>
+        <div class="menu-list-item">
+            <div class="menu-list-icon bg-3">
+                <i class="material-icons">security</i>
+            </div>
+            <span class="menu-list-text">账号安全</span>
+            <i class="material-icons menu-list-arrow">chevron_right</i>
+        </div>
+        <div class="menu-list-item">
+            <div class="menu-list-icon bg-4">
+                <i class="material-icons">headset_mic</i>
+            </div>
+            <span class="menu-list-text">联系客服</span>
+            <i class="material-icons menu-list-arrow">chevron_right</i>
+        </div>
+        <div class="menu-list-item">
+            <div class="menu-list-icon bg-5">
+                <i class="material-icons">settings</i>
+            </div>
+            <span class="menu-list-text">设置</span>
+            <i class="material-icons menu-list-arrow">chevron_right</i>
+        </div>
+    </div>
+
+    <!-- 添加头像预览弹窗 -->
+    <div class="avatar-preview-modal" id="avatarPreviewModal">
+        <div class="avatar-preview-content">
+            <div class="preview-title">预览头像</div>
+            <div class="preview-image">
+                <img id="avatarPreview" src="" alt="头像预览">
+            </div>
+            <div class="preview-buttons">
+                <button class="preview-btn cancel-btn" onclick="cancelAvatarChange()">取消</button>
+                <button class="preview-btn confirm-btn" onclick="confirmAvatarChange()">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 添加滑动返回功能
+        let startX = 0;
+        let startY = 0;
+        const threshold = 50;
+
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (startX < 50) {
+                const deltaX = e.touches[0].clientX - startX;
+                const deltaY = Math.abs(e.touches[0].clientY - startY);
+                
+                if (deltaX > deltaY && deltaX > 0) {
+                    e.preventDefault();
+                }
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            if (startX < 50) {
+                const deltaX = e.changedTouches[0].clientX - startX;
+                const deltaY = Math.abs(e.changedTouches[0].clientY - startY);
+                
+                if (deltaX > threshold && deltaX > deltaY) {
+                    window.location.href = 'quwanxingqiu.html';
+                }
+            }
+        });
+
+        // 添加菜单项点击事件
+        document.querySelectorAll('.menu-item, .menu-list-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const menuName = this.querySelector('.menu-name, .menu-list-text').textContent;
+                switch(menuName) {
+                    case '全部订单':
+                    case '待付款':
+                    case '进行中':
+                    case '已完成':
+                        alert('跳转到订单列表页面');
+                        break;
+                    case '会员中心':
+                        alert('跳转到会员中心');
+                        break;
+                    case '我的钱包':
+                        alert('跳转到钱包页面');
+                        break;
+                    case '我的收藏':
+                        alert('跳转到收藏列表');
+                        break;
+                    case '浏览记录':
+                        alert('跳转到浏览记录');
+                        break;
+                    case '陪玩认证':
+                        alert('跳转到认证页面');
+                        break;
+                    case '修改资料':
+                        alert('跳转到资料编辑页面');
+                        break;
+                    case '账号安全':
+                        alert('跳转到安全设置页面');
+                        break;
+                    case '联系客服':
+                        alert('打开客服会话');
+                        break;
+                    case '设置':
+                        alert('跳转到设置页面');
+                        break;
+                }
+            });
+        });
+
+        // 修改用户ID相关的代码
+        document.addEventListener('DOMContentLoaded', function() {
+            // 从localStorage获取用户ID
+            let userId = localStorage.getItem('userId');
+            
+            // 如果没有用户ID，说明是首次"注册"，生成一个永久ID
+            if (!userId) {
+                // 生成9位数字ID
+                userId = Math.floor(100000000 + Math.random() * 900000000);
+                // 存储到localStorage作为永久ID
+                localStorage.setItem('userId', userId);
+            }
+            
+            // 显示用户ID
+            document.querySelector('.user-id').textContent = `ID: ${userId}`;
+        });
+
+        // 添加头像修改相关功能
+        function handleAvatarChange(event) {
+            const file = event.target.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) { // 5MB限制
+                    alert('图片大小不能超过5MB');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // 显示预览弹窗
+                    document.getElementById('avatarPreview').src = e.target.result;
+                    document.getElementById('avatarPreviewModal').style.display = 'flex';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function cancelAvatarChange() {
+            document.getElementById('avatarPreviewModal').style.display = 'none';
+            document.getElementById('avatarInput').value = ''; // 清空文件选择
+        }
+
+        function confirmAvatarChange() {
+            const newAvatarSrc = document.getElementById('avatarPreview').src;
+            document.getElementById('userAvatar').src = newAvatarSrc;
+            
+            // 保存到localStorage
+            localStorage.setItem('userAvatar', newAvatarSrc);
+            
+            // 关闭预览弹窗
+            document.getElementById('avatarPreviewModal').style.display = 'none';
+            
+            // 显示成功提示
+            alert('头像修改成功');
+        }
+
+        // 页面加载时检查是否有保存的头像
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedAvatar = localStorage.getItem('userAvatar');
+            if (savedAvatar) {
+                document.getElementById('userAvatar').src = savedAvatar;
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>神话传说</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        #game-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .ui-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .status-bar {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 100;
+            pointer-events: auto;
+        }
+
+        .hp-bar, .mp-bar {
+            width: 200px;
+            height: 20px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .hp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff4444, #ff6666);
+            width: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .mp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4444ff, #6666ff);
+            width: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .skill-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+            pointer-events: auto;
+        }
+
+        .skill-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 30px;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid #fff;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .skill-btn:active {
+            transform: scale(0.9);
+        }
+
+        .virtual-joystick {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 120px;
+            height: 120px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 60px;
+            pointer-events: auto;
+        }
+
+        .joystick-handle {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 25px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            z-index: 1000;
+        }
+
+        .loading-bar {
+            width: 200px;
+            height: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff4444, #ff6666);
+            transition: width 0.3s ease;
+        }
+
+        /* 添加返回按钮样式 */
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.5);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:active {
+            transform: scale(0.95);
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .back-button .material-icons {
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-screen">
+        <h2>神话传说</h2>
+        <div class="loading-bar">
+            <div class="loading-progress"></div>
+        </div>
+    </div>
+
+    <canvas id="game-canvas"></canvas>
+
+    <div class="ui-overlay">
+        <button class="back-button" onclick="window.location.href='quwanyouxi.html'">
+            <i class="material-icons">arrow_back</i>
+        </button>
+        <div class="status-bar">
+            <div class="hp-bar">
+                <div class="hp-fill" id="playerHp"></div>
+            </div>
+            <div class="mp-bar">
+                <div class="mp-fill" id="playerMp"></div>
+            </div>
+        </div>
+
+        <div class="virtual-joystick">
+            <div class="joystick-handle"></div>
+        </div>
+
+        <div class="skill-bar">
+            <button class="skill-btn" data-skill="1">⚔️</button>
+            <button class="skill-btn" data-skill="2">🔥</button>
+            <button class="skill-btn" data-skill="3">⚡</button>
+            <button class="skill-btn" data-skill="4">🌀</button>
+        </div>
+    </div>
+
+    <audio id="bgMusic" loop>
+        <source src="path_to_background_music.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // 场景相关变量
+        let scene, camera, renderer, controls;
+        let player, boss;
+        let animations = {};
+        let mixer;
+        let clock = new THREE.Clock();
+
+        // 游戏状态
+        let gameState = {
+            playerHp: 100,
+            playerMp: 100,
+            bossHp: 1000,
+            isPlaying: false
+        };
+
+        // 初始化场景
+        function initScene() {
+            // 创建场景
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87ceeb); // 天空蓝色背景
+
+            // 创建相机
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 5, 10);
+
+            // 创建渲染器
+            renderer = new THREE.WebGLRenderer({
+                canvas: document.getElementById('game-canvas'),
+                antialias: true
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+
+            // 添加环境光和平行光
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(0, 10, 10);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+
+            // 创建地面
+            const groundGeometry = new THREE.PlaneGeometry(50, 50);
+            const groundMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x91785b,
+                roughness: 0.8,
+                metalness: 0.2 
+            });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            // 添加远景装饰
+            addEnvironment();
+
+            // 初始化控制器
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2;
+        }
+
+        // 加载角色模型
+        async function loadCharacter() {
+            const loader = new THREE.GLTFLoader();
+            
+            try {
+                const gltf = await loader.loadAsync('path_to_character_model.glb');
+                player = gltf.scene;
+                player.scale.set(0.1, 0.1, 0.1);
+                player.position.y = 0;
+                player.castShadow = true;
+                scene.add(player);
+
+                // 设置动画混合器
+                mixer = new THREE.AnimationMixer(player);
+                gltf.animations.forEach(clip => {
+                    animations[clip.name] = mixer.clipAction(clip);
+                });
+
+                // 播放待机动画
+                if(animations['idle']) {
+                    animations['idle'].play();
+                }
+
+            } catch (error) {
+                console.error('Error loading character:', error);
+            }
+        }
+
+        // 加载Boss模型
+        async function loadBoss() {
+            const loader = new THREE.GLTFLoader();
+            
+            try {
+                const gltf = await loader.loadAsync('path_to_boss_model.glb');
+                boss = gltf.scene;
+                boss.scale.set(0.2, 0.2, 0.2);
+                boss.position.set(0, 0, -10);
+                boss.castShadow = true;
+                scene.add(boss);
+
+                // 设置Boss动画
+                const bossMixer = new THREE.AnimationMixer(boss);
+                gltf.animations.forEach(clip => {
+                    const action = bossMixer.clipAction(clip);
+                    if(clip.name === 'idle') {
+                        action.play();
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error loading boss:', error);
+            }
+        }
+
+        // 添加环境装饰
+        function addEnvironment() {
+            // 添加远处的山脉
+            const mountainGeometry = new THREE.ConeGeometry(5, 10, 4);
+            const mountainMaterial = new THREE.MeshStandardMaterial({ color: 0x4a5568 });
+            
+            for(let i = 0; i < 10; i++) {
+                const mountain = new THREE.Mesh(mountainGeometry, mountainMaterial);
+                mountain.position.set(
+                    Math.random() * 100 - 50,
+                    5,
+                    Math.random() * -50 - 20
+                );
+                mountain.rotation.y = Math.random() * Math.PI;
+                scene.add(mountain);
+            }
+
+            // 添加树木
+            const treeGeometry = new THREE.CylinderGeometry(0, 1.5, 5, 8);
+            const treeMaterial = new THREE.MeshStandardMaterial({ color: 0x2f855a });
+            
+            for(let i = 0; i < 20; i++) {
+                const tree = new THREE.Mesh(treeGeometry, treeMaterial);
+                tree.position.set(
+                    Math.random() * 40 - 20,
+                    2.5,
+                    Math.random() * 40 - 20
+                );
+                tree.castShadow = true;
+                scene.add(tree);
+            }
+        }
+
+        // 角色控制系统
+        function initControls() {
+            // 虚拟摇杆控制
+            const joystick = document.querySelector('.virtual-joystick');
+            const handle = document.querySelector('.joystick-handle');
+            let isDragging = false;
+            let startX, startY;
+
+            joystick.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            });
+
+            joystick.addEventListener('touchmove', (e) => {
+                if(!isDragging) return;
+
+                const deltaX = e.touches[0].clientX - startX;
+                const deltaY = e.touches[0].clientY - startY;
+                const distance = Math.min(Math.sqrt(deltaX * deltaX + deltaY * deltaY), 35);
+                const angle = Math.atan2(deltaY, deltaX);
+
+                handle.style.transform = `translate(
+                    ${distance * Math.cos(angle)}px,
+                    ${distance * Math.sin(angle)}px
+                )`;
+
+                // 移动角色
+                if(player) {
+                    const moveSpeed = 0.1;
+                    player.position.x += deltaX * moveSpeed;
+                    player.position.z += deltaY * moveSpeed;
+                    player.rotation.y = -angle;
+
+                    // 切换到跑步动画
+                    if(animations['run'] && !animations['run'].isRunning()) {
+                        animations['idle'].stop();
+                        animations['run'].play();
+                    }
+                }
+            });
+
+            joystick.addEventListener('touchend', () => {
+                isDragging = false;
+                handle.style.transform = 'translate(0, 0)';
+
+                // 切换回待机动画
+                if(animations['idle'] && animations['run']) {
+                    animations['run'].stop();
+                    animations['idle'].play();
+                }
+            });
+        }
+
+        // 战斗系统
+        function initCombat() {
+            // 技能按钮点击事件
+            document.querySelectorAll('.skill-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const skillId = btn.dataset.skill;
+                    useSkill(skillId);
+                });
+            });
+        }
+
+        // 使用技能
+        function useSkill(skillId) {
+            if(!gameState.isPlaying) return;
+
+            const mpCost = {
+                1: 10,  // 普通攻击
+                2: 20,  // 火球术
+                3: 30,  // 雷电术
+                4: 50   // 终极技能
+            };
+
+            // 检查MP是否足够
+            if(gameState.playerMp < mpCost[skillId]) {
+                showMessage("魔法值不足！");
+                return;
+            }
+
+            // 扣除MP
+            gameState.playerMp -= mpCost[skillId];
+            updateUI();
+
+            // 播放攻击动画
+            if(animations['attack']) {
+                animations['attack'].play();
+                setTimeout(() => {
+                    animations['idle'].play();
+                }, 1000);
+            }
+
+            // 创建技能特效
+            createSkillEffect(skillId);
+
+            // 对Boss造成伤害
+            const damage = calculateDamage(skillId);
+            dealDamageToBoss(damage);
+        }
+
+        // 计算伤害
+        function calculateDamage(skillId) {
+            const baseDamage = {
+                1: 50,   // 普通攻击
+                2: 100,  // 火球术
+                3: 150,  // 雷电术
+                4: 300   // 终极技能
+            };
+
+            // 添加随机浮动
+            const variation = Math.random() * 0.2 - 0.1; // -10% 到 +10%
+            return Math.floor(baseDamage[skillId] * (1 + variation));
+        }
+
+        // 对Boss造成伤害
+        function dealDamageToBoss(damage) {
+            gameState.bossHp -= damage;
+            
+            // 显示伤害数字
+            showDamageNumber(damage);
+            
+            // 更新Boss血条
+            updateBossHpBar();
+            
+            // 检查Boss是否被击败
+            if(gameState.bossHp <= 0) {
+                gameVictory();
+            }
+        }
+
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const delta = clock.getDelta();
+            
+            if(mixer) {
+                mixer.update(delta);
+            }
+            
+            if(controls) {
+                controls.update();
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        // 初始化游戏
+        async function initGame() {
+            initScene();
+            await loadCharacter();
+            await loadBoss();
+            initControls();
+            initCombat();
+            animate();
+            
+            // 隐藏加载屏幕
+            document.querySelector('.loading-screen').style.display = 'none';
+            
+            // 开始游戏
+            gameState.isPlaying = true;
+        }
+
+        // 页面加载完成后初始化游戏
+        window.addEventListener('load', initGame);
+
+        // 窗口大小改变时更新渲染器和相机
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 返回游戏列表函数
+        function returnToGameList() {
+            // 清理游戏资源
+            if(mixer) mixer.stopAllAction();
+            if(scene) {
+                scene.traverse(object => {
+                    if(object.geometry) object.geometry.dispose();
+                    if(object.material) {
+                        if(Array.isArray(object.material)) {
+                            object.material.forEach(material => material.dispose());
+                        } else {
+                            object.material.dispose();
+                        }
+                    }
+                });
+            }
+            if(renderer) renderer.dispose();
+            
+            // 停止背景音乐
+            const bgMusic = document.getElementById('bgMusic');
+            if(bgMusic) bgMusic.pause();
+            
+            // 直接使用window.location.href进行跳转
+            window.location.href = 'quwanyouxi.html';
+        }
+
+        // 确保返回按钮事件监听器正确绑定
+        document.addEventListener('DOMContentLoaded', function() {
+            const backButton = document.querySelector('.back-button');
+            if(backButton) {
+                backButton.addEventListener('click', returnToGameList);
+            }
+        });
+    </script>
+</body>
+</html> 

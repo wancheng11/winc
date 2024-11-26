@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>本地生活</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* 顶部搜索栏 */
+        .search-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            padding: 15px;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #f5f5f5;
+            border-radius: 20px;
+            padding: 8px 15px;
+        }
+
+        .search-icon {
+            color: #999;
+            margin-right: 8px;
+        }
+
+        .search-input {
+            border: none;
+            background: none;
+            flex: 1;
+            font-size: 14px;
+            outline: none;
+        }
+
+        /* 内容区域 */
+        .content {
+            margin-top: 60px;
+            padding: 15px;
+        }
+
+        /* 分类导航 */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+            background: #fff;
+            padding: 15px;
+            border-radius: 12px;
+        }
+
+        .category-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .category-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+
+        .category-name {
+            font-size: 12px;
+            color: #333;
+        }
+
+        /* 商家卡片 */
+        .shop-card {
+            background: #fff;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .shop-image {
+            width: 100%;
+            height: 160px;
+            position: relative;
+        }
+
+        .shop-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .shop-info {
+            padding: 15px;
+        }
+
+        .shop-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .shop-rating {
+            color: #FF9800;
+            font-size: 14px;
+        }
+
+        .shop-tags {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .tag {
+            background: #f5f5f5;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .shop-price {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .price {
+            color: #FF6B6B;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .original-price {
+            color: #999;
+            font-size: 12px;
+            text-decoration: line-through;
+            margin-left: 5px;
+        }
+
+        .sold-count {
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* 优惠标签 */
+        .discount-tag {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 107, 107, 0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        /* 渐变背景色 */
+        .bg-1 { background: linear-gradient(135deg, #FF6B6B, #FF8E8E); }
+        .bg-2 { background: linear-gradient(135deg, #4ECDC4, #45B7D1); }
+        .bg-3 { background: linear-gradient(135deg, #A78BFA, #8B5CF6); }
+        .bg-4 { background: linear-gradient(135deg, #F59E0B, #D97706); }
+        .bg-5 { background: linear-gradient(135deg, #10B981, #059669); }
+        .bg-6 { background: linear-gradient(135deg, #3B82F6, #60A5FA); }
+        .bg-7 { background: linear-gradient(135deg, #EC4899, #F472B6); }
+        .bg-8 { background: linear-gradient(135deg, #8B5CF6, #A78BFA); }
+        .bg-9 { background: linear-gradient(135deg, #14B8A6, #2DD4BF); }
+        .bg-10 { background: linear-gradient(135deg, #F97316, #FB923C); }
+
+        /* 滑动返回区域 */
+        .slide-back-area {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 20px;
+            z-index: 1000;
+        }
+
+        /* 分类标题 */
+        .section-title {
+            font-size: 17px;
+            font-weight: 600;
+            margin: 20px 0 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title .material-icons {
+            color: #FF6B6B;
+        }
+
+        /* 距离标签 */
+        .distance {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        /* 商家地址 */
+        .shop-address {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .shop-address .material-icons {
+            font-size: 16px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-back-area"></div>
+
+    <div class="search-bar">
+        <div class="search-box">
+            <i class="material-icons search-icon">search</i>
+            <input type="text" class="search-input" placeholder="搜索商家、团购">
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="category-grid">
+            <div class="category-item">
+                <div class="category-icon bg-1">
+                    <i class="material-icons">restaurant</i>
+                </div>
+                <div class="category-name">美食</div>
+            </div>
+            <div class="category-item">
+                <div class="category-icon bg-2">
+                    <i class="material-icons">movie</i>
+                </div>
+                <div class="category-name">电影</div>
+            </div>
+            <div class="category-item">
+                <div class="category-icon bg-3">
+                    <i class="material-icons">hotel</i>
+                </div>
+                <div class="category-name">酒店</div>
+            </div>
+            <div class="category-item">
+                <div class="category-icon bg-4">
+                    <i class="material-icons">spa</i>
+                </div>
+                <div class="category-name">休闲</div>
+            </div>
+            <div class="category-item">
+                <div class="category-icon bg-5">
+                    <i class="material-icons">sports_esports</i>
+                </div>
+                <div class="category-name">娱乐</div>
+            </div>
+            <div class="category-item">
+                <div class="category-icon bg-6">
+                    <i class="material-icons">local_mall</i>
+                </div>
+                <div class="category-name">购物</div>
+            </div>
+            <div class="category-item">
+                <div class="category-icon bg-7">
+                    <i class="material-icons">fitness_center</i>
+                </div>
+                <div class="category-name">健身</div>
+            </div>
+            <div class="category-item">
+                <div class="category-icon bg-8">
+                    <i class="material-icons">medical_services</i>
+                </div>
+                <div class="category-name">医疗</div>
+            </div>
+            <div class="category-item">
+                <div class="category-icon bg-9">
+                    <i class="material-icons">local_car_wash</i>
+                </div>
+                <div class="category-name">汽车</div>
+            </div>
+            <div class="category-item">
+                <div class="category-icon bg-10">
+                    <i class="material-icons">more_horiz</i>
+                </div>
+                <div class="category-name">更多</div>
+            </div>
+        </div>
+
+        <div class="section-title">
+            <i class="material-icons">local_fire_department</i>
+            <span>热门推荐</span>
+        </div>
+
+        <div class="shop-list">
+            <!-- 商家1 -->
+            <div class="shop-card">
+                <div class="shop-image">
+                    <img src="https://example.com/shop1.jpg" alt="商家图片">
+                    <span class="discount-tag">立减50元</span>
+                    <span class="distance">500m</span>
+                </div>
+                <div class="shop-info">
+                    <div class="shop-title">
+                        <span>星级海鲜自助餐厅</span>
+                        <span class="shop-rating">⭐4.8</span>
+                    </div>
+                    <div class="shop-address">
+                        <i class="material-icons">location_on</i>
+                        <span>市中心商圈环球中心</span>
+                    </div>
+                    <div class="shop-tags">
+                        <span class="tag">自助餐</span>
+                        <span class="tag">海鲜</span>
+                        <span class="tag">免费停车</span>
+                    </div>
+                    <div class="shop-price">
+                        <div>
+                            <span class="price">¥168</span>
+                            <span class="original-price">¥268</span>
+                        </div>
+                        <span class="sold-count">已售12345</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 商家2 -->
+            <div class="shop-card">
+                <div class="shop-image">
+                    <img src="https://example.com/shop2.jpg" alt="商家图片">
+                    <span class="discount-tag">团购优惠</span>
+                    <span class="distance">1.2km</span>
+                </div>
+                <div class="shop-info">
+                    <div class="shop-title">
+                        <span>品茶SPA会所</span>
+                        <span class="shop-rating">⭐4.9</span>
+                    </div>
+                    <div class="shop-address">
+                        <i class="material-icons">location_on</i>
+                        <span>高新区软件园</span>
+                    </div>
+                    <div class="shop-tags">
+                        <span class="tag">SPA</span>
+                        <span class="tag">按摩</span>
+                        <span class="tag">茶道</span>
+                    </div>
+                    <div class="shop-price">
+                        <div>
+                            <span class="price">¥299</span>
+                            <span class="original-price">¥599</span>
+                        </div>
+                        <span class="sold-count">已售8976</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 更多商家卡片 -->
+        </div>
+    </div>
+
+    <script>
+        // 添加滑动返回功能
+        let startX = 0;
+        let startY = 0;
+        const threshold = 50;
+
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (startX < 50) {
+                const deltaX = e.touches[0].clientX - startX;
+                const deltaY = Math.abs(e.touches[0].clientY - startY);
+                
+                if (deltaX > deltaY && deltaX > 0) {
+                    e.preventDefault();
+                }
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            if (startX < 50) {
+                const deltaX = e.changedTouches[0].clientX - startX;
+                const deltaY = Math.abs(e.changedTouches[0].clientY - startY);
+                
+                if (deltaX > threshold && deltaX > deltaY) {
+                    window.location.href = 'quwanxingqiu.html';
+                }
+            }
+        });
+
+        // 添加商家点击事件
+        document.querySelectorAll('.shop-card').forEach(card => {
+            card.addEventListener('click', () => {
+                // 获取商家信息
+                const shopInfo = {
+                    title: card.querySelector('.shop-title span').textContent,
+                    price: card.querySelector('.price').textContent,
+                    image: card.querySelector('img').src,
+                    rating: card.querySelector('.shop-rating').textContent,
+                    address: card.querySelector('.shop-address span').textContent,
+                    tags: Array.from(card.querySelectorAll('.tag')).map(tag => tag.textContent)
+                };
+                
+                // 存储商家信息
+                localStorage.setItem('currentShop', JSON.stringify(shopInfo));
+                
+                // 跳转到详情页
+                window.location.href = 'shop-detail.html';
+            });
+        });
+
+        // 添加分类点击事件
+        document.querySelectorAll('.category-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const category = item.querySelector('.category-name').textContent;
+                // 这里可以添加分类跳转逻辑
+                alert(`跳转到${category}分类`);
+            });
+        });
+    </script>
+</body>
+</html> 

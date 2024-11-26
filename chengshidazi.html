@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>城市搭子</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* 顶部搜索栏 */
+        .search-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            padding: 15px;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #f5f5f5;
+            border-radius: 20px;
+            padding: 8px 15px;
+        }
+
+        .search-icon {
+            color: #999;
+            margin-right: 8px;
+        }
+
+        .search-input {
+            border: none;
+            background: none;
+            flex: 1;
+            font-size: 14px;
+            outline: none;
+        }
+
+        /* 内容区域 */
+        .content {
+            margin-top: 110px;
+            padding: 15px;
+        }
+
+        /* 分类导航 */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .category-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .category-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .category-name {
+            font-size: 13px;
+            color: #333;
+        }
+
+        /* 搭子卡片 */
+        .partner-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 15px;
+            position: relative;
+        }
+
+        .partner-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 30px;
+            overflow: hidden;
+        }
+
+        .partner-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .partner-info {
+            flex: 1;
+        }
+
+        .partner-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .partner-name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .partner-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .tag {
+            background: #f5f5f5;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .partner-desc {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .partner-stats {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* 定位栏 */
+        .location-bar {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            background: #fff;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 99;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .location-icon {
+            color: #FF6B6B;
+        }
+
+        .location-text {
+            font-size: 14px;
+            color: #333;
+        }
+
+        /* 渐变背景色 */
+        .bg-1 { background: linear-gradient(135deg, #FF6B6B, #FF8E8E); }
+        .bg-2 { background: linear-gradient(135deg, #4ECDC4, #45B7D1); }
+        .bg-3 { background: linear-gradient(135deg, #A78BFA, #8B5CF6); }
+        .bg-4 { background: linear-gradient(135deg, #F59E0B, #D97706); }
+
+        /* 滑动返回区域 */
+        .slide-back-area {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 20px;
+            z-index: 1000;
+        }
+
+        /* 联系按钮 */
+        .contact-btn {
+            position: absolute;
+            right: 15px;
+            bottom: 15px;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            border: none;
+        }
+
+        .contact-btn:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-back-area"></div>
+
+    <!-- 搜索栏 -->
+    <div class="search-bar">
+        <div class="search-box">
+            <i class="material-icons search-icon">search</i>
+            <input type="text" class="search-input" placeholder="搜索搭子">
+        </div>
+    </div>
+
+    <!-- 定位栏 -->
+    <div class="location-bar">
+        <i class="material-icons location-icon">location_on</i>
+        <span class="location-text">当前位置：广州市</span>
+    </div>
+
+    <div class="content">
+        <!-- 分类导航 -->
+        <div class="category-grid">
+            <div class="category-item">
+                <div class="category-icon bg-1">
+                    <i class="material-icons">restaurant</i>
+                </div>
+                <span class="category-name">美食搭子</span>
+            </div>
+            <div class="category-item">
+                <div class="category-icon bg-2">
+                    <i class="material-icons">movie</i>
+                </div>
+                <span class="category-name">电影搭子</span>
+            </div>
+            <div class="category-item">
+                <div class="category-icon bg-3">
+                    <i class="material-icons">sports_esports</i>
+                </div>
+                <span class="category-name">游戏搭子</span>
+            </div>
+            <div class="category-item">
+                <div class="category-icon bg-4">
+                    <i class="material-icons">directions_run</i>
+                </div>
+                <span class="category-name">运动搭子</span>
+            </div>
+        </div>
+
+        <!-- 搭子列表 -->
+        <div class="partner-list">
+            <!-- 搭子1 -->
+            <div class="partner-card">
+                <div class="partner-avatar">
+                    <img src="https://s1.imagehub.cc/images/2024/11/08/517863d36cc7513386d28d457636008d.jpeg" alt="搭子头像">
+                </div>
+                <div class="partner-info">
+                    <div class="partner-header">
+                        <div class="partner-name">小可爱</div>
+                        <div class="partner-distance">500m</div>
+                    </div>
+                    <div class="partner-tags">
+                        <span class="tag">美食爱好者</span>
+                        <span class="tag">90后</span>
+                        <span class="tag">广州本地</span>
+                    </div>
+                    <div class="partner-desc">喜欢探店，寻找美食，周末有空可以一起吃喝玩乐~</div>
+                    <div class="partner-stats">
+                        <span>信用 98%</span>
+                        <span>已认证</span>
+                    </div>
+                </div>
+                <button class="contact-btn">打招呼</button>
+            </div>
+
+            <!-- 搭子2 -->
+            <div class="partner-card">
+                <div class="partner-avatar">
+                    <img src="https://s1.imagehub.cc/images/2024/11/08/517863d36cc7513386d28d457636008d.jpeg" alt="搭子头像">
+                </div>
+                <div class="partner-info">
+                    <div class="partner-header">
+                        <div class="partner-name">阿杰</div>
+                        <div class="partner-distance">1.2km</div>
+                    </div>
+                    <div class="partner-tags">
+                        <span class="tag">运动达人</span>
+                        <span class="tag">95后</span>
+                        <span class="tag">篮球</span>
+                    </div>
+                    <div class="partner-desc">热爱运动，找个搭子一起打球健身，互相进步~</div>
+                    <div class="partner-stats">
+                        <span>信用 95%</span>
+                        <span>已认证</span>
+                    </div>
+                </div>
+                <button class="contact-btn">打招呼</button>
+            </div>
+
+            <!-- 搭子3 -->
+            <div class="partner-card">
+                <div class="partner-avatar">
+                    <img src="https://s1.imagehub.cc/images/2024/11/08/517863d36cc7513386d28d457636008d.jpeg" alt="搭子头像">
+                </div>
+                <div class="partner-info">
+                    <div class="partner-header">
+                        <div class="partner-name">小甜甜</div>
+                        <div class="partner-distance">800m</div>
+                    </div>
+                    <div class="partner-tags">
+                        <span class="tag">电影控</span>
+                        <span class="tag">00后</span>
+                        <span class="tag">漫威迷</span>
+                    </div>
+                    <div class="partner-desc">喜欢看电影，找个人一起追新片，讨论剧情~</div>
+                    <div class="partner-stats">
+                        <span>信用 97%</span>
+                        <span>已认证</span>
+                    </div>
+                </div>
+                <button class="contact-btn">打招呼</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 添加滑动返回功能
+        let startX = 0;
+        let startY = 0;
+        const threshold = 50;
+
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (startX < 50) {
+                const deltaX = e.touches[0].clientX - startX;
+                const deltaY = Math.abs(e.touches[0].clientY - startY);
+                
+                if (deltaX > deltaY && deltaX > 0) {
+                    e.preventDefault();
+                }
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            if (startX < 50) {
+                const deltaX = e.changedTouches[0].clientX - startX;
+                const deltaY = Math.abs(e.changedTouches[0].clientY - startY);
+                
+                if (deltaX > threshold && deltaX > deltaY) {
+                    window.location.href = 'quwanxingqiu.html';
+                }
+            }
+        });
+
+        // 添加分类点击事件
+        document.querySelectorAll('.category-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const categoryName = item.querySelector('.category-name').textContent;
+                alert(`切换到${categoryName}分类`);
+            });
+        });
+
+        // 添加联系按钮点击事件
+        document.querySelectorAll('.contact-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                alert('正在连接...');
+            });
+        });
+
+        // 添加搭子卡片点击事件
+        document.querySelectorAll('.partner-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const name = card.querySelector('.partner-name').textContent;
+                alert(`查看${name}的详细资料`);
+            });
+        });
+    </script>
+</body>
+</html> 

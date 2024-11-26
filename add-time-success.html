@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>加时成功</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            line-height: 1.6;
+        }
+
+        .container {
+            padding: 16px;
+        }
+
+        .success-header {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .success-icon {
+            color: #4CAF50;
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .success-title {
+            font-size: 18px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .order-info {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .info-label {
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .addtime-info {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .highlight {
+            color: #FF6B6B;
+        }
+
+        .back-btn {
+            width: 100%;
+            padding: 16px;
+            background: #FF6B6B;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .gesture-back {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 20px;
+            z-index: 99;
+        }
+    </style>
+</head>
+<body>
+    <div class="gesture-back"></div>
+
+    <div class="container">
+        <!-- 成功提示 -->
+        <div class="success-header">
+            <i class="material-icons success-icon">check_circle</i>
+            <div class="success-title">加时成功</div>
+        </div>
+
+        <!-- 原订单信息 -->
+        <div class="order-info">
+            <div class="section-title">
+                <i class="material-icons" style="color: #333; font-size: 18px;">receipt</i>
+                原订单信息
+            </div>
+            <div class="info-item">
+                <span class="info-label">订单号</span>
+                <span class="info-value" id="orderId">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">服务项目</span>
+                <span class="info-value" id="service">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">预约日期</span>
+                <span class="info-value" id="date">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">服务时间</span>
+                <span class="info-value" id="serviceTime">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">原服务时长</span>
+                <span class="info-value" id="originalDuration">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">原订单费用</span>
+                <span class="info-value" id="originalPrice">--</span>
+            </div>
+        </div>
+
+        <!-- 加时信息 -->
+        <div class="addtime-info">
+            <div class="section-title">
+                <i class="material-icons" style="color: #FF6B6B; font-size: 18px;">update</i>
+                加时信息
+            </div>
+            <div class="info-item">
+                <span class="info-label">加时时长</span>
+                <span class="info-value highlight" id="additionalDuration">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">加时费用</span>
+                <span class="info-value highlight" id="additionalPrice">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">加时时间</span>
+                <span class="info-value" id="addTimeDate">--</span>
+            </div>
+            <div class="info-item" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee;">
+                <span class="info-label">总服务时长</span>
+                <span class="info-value highlight" id="totalDuration">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">总计费用</span>
+                <span class="info-value highlight" id="totalPrice">--</span>
+            </div>
+        </div>
+
+        <!-- 返回按钮 -->
+        <button class="back-btn" onclick="window.location.href='order-detail.html'">返回订单详情</button>
+    </div>
+
+    <script>
+        // 页面加载时获取订单信息
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentOrder = JSON.parse(localStorage.getItem('currentOrder'));
+            if (currentOrder) {
+                // 显示原订单信息
+                document.getElementById('orderId').textContent = currentOrder.orderId;
+                document.getElementById('service').textContent = currentOrder.service;
+                document.getElementById('date').textContent = currentOrder.date;
+                document.getElementById('serviceTime').textContent = currentOrder.serviceTime;
+                document.getElementById('originalDuration').textContent = currentOrder.addTimeInfo.originalDuration;
+                document.getElementById('originalPrice').textContent = currentOrder.price;
+
+                // 显示加时信息
+                document.getElementById('additionalDuration').textContent = currentOrder.addTimeInfo.additionalDuration;
+                document.getElementById('additionalPrice').textContent = currentOrder.addTimeInfo.additionalPrice;
+                document.getElementById('addTimeDate').textContent = new Date(currentOrder.addTimeInfo.addTimeDate).toLocaleString();
+                document.getElementById('totalDuration').textContent = currentOrder.addTimeInfo.totalDuration;
+                document.getElementById('totalPrice').textContent = currentOrder.price;
+            }
+        });
+
+        // 添加手势返回功能
+        let startX = 0;
+        let startY = 0;
+        const threshold = 50;
+
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (startX < 50) {
+                const deltaX = e.touches[0].clientX - startX;
+                const deltaY = Math.abs(e.touches[0].clientY - startY);
+                
+                if (deltaX > deltaY && deltaX > 0) {
+                    e.preventDefault();
+                }
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            if (startX < 50) {
+                const deltaX = e.changedTouches[0].clientX - startX;
+                const deltaY = Math.abs(e.changedTouches[0].clientY - startY);
+                
+                if (deltaX > threshold && deltaX > deltaY) {
+                    window.location.href = 'order-detail.html';
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

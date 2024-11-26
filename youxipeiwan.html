@@ -1,0 +1,2306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>游戏陪玩</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f2f2f2;
+            color: #333;
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        /* 顶部导航栏 */
+        .header {
+            display: none;
+        }
+
+        .content {
+            padding: 3px;
+            padding-bottom: 70px;
+        }
+
+        /* 搜索栏 */
+        .search-box {
+            background: #fff;
+            border-radius: 12px;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e8e8e8;
+        }
+
+        .search-icon {
+            color: #999;
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        .search-input {
+            border: none;
+            background: none;
+            flex: 1;
+            font-size: 15px;
+            outline: none;
+            color: #333;
+        }
+
+        .search-input::placeholder {
+            color: #999;
+        }
+
+        /* 快速匹配卡片 */
+        .quick-match {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+            border-radius: 16px;
+            padding: 20px;
+            color: white;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.2);
+            margin: 3px auto;
+        }
+
+        .quick-match-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .quick-match-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .quick-match-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        .quick-match-btn:active {
+            transform: scale(0.98);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* 游戏分类 */
+        .game-section {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            margin: 3px auto;
+        }
+
+        .section-header {
+            display: none;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 15px 8px 15px;
+            margin-bottom: 0;
+            width: 359px;
+            margin: 0 auto;
+            box-sizing: border-box;
+            text-align: left;
+        }
+
+        .section-title i {
+            font-size: 16px; /* 减小图标大小 */
+        }
+
+        .section-title span {
+            font-size: 14px; /* 减小文字大小 */
+            font-weight: 500;
+            color: #333;
+            text-align: left;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            padding: 5px 0;
+        }
+
+        .game-item {
+            background: transparent;
+            padding: 8px 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .game-item:active {
+            transform: scale(0.98);
+            background: #f0f1f2;
+        }
+
+        .game-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .game-icon .material-icons {
+            font-size: 20px;
+        }
+
+        .game-name {
+            font-size: 12px;
+            font-weight: 500;
+            color: #333;
+            text-align: center;
+        }
+
+        /* 更新热门推荐相关样式 */
+        .hot-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            margin-bottom: 20px;
+            margin: 3px auto;
+        }
+
+        .hot-item {
+            width: 100%;
+            height: 100px;
+            padding: 12px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            position: relative;
+            border: 1px solid #FFE4E4;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .hot-item::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            border-radius: 12px;
+            background: linear-gradient(45deg, #FF6B6B, #FFB199);
+            -webkit-mask: 
+                linear-gradient(#fff 0 0) content-box, 
+                linear-gradient(#fff 0 0);
+            mask: 
+                linear-gradient(#fff 0 0) content-box, 
+                linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .hot-item:active {
+            transform: scale(0.98);
+            background: #fafafa;
+        }
+
+        .hot-item-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            overflow: hidden;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .hot-item-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .hot-item-info {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 2px 0;
+        }
+
+        .hot-item-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .name-voice {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .hot-item-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .hot-item-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin: 4px 0;
+        }
+
+        .game-tag, .tag {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+        }
+
+        .tag {
+            background: #f5f5f5;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #666;
+        }
+
+        .hot-item-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .status-badge {
+            background: rgba(52, 199, 89, 0.1);
+            color: #34C759;
+            padding: 1px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+        }
+
+        .status-badge::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 4px;
+            background: #34C759;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+
+        .order-count, .rating {
+            color: #666;
+            font-size: 10px;
+        }
+
+        .hot-item-price {
+            position: absolute;
+            right: 12px;
+            top: 12px;
+            color: #FF6B6B;
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        @media screen and (max-width: 320px) {
+            .hot-item {
+                height: 90px;
+                padding: 10px;
+            }
+            
+            .hot-item-avatar {
+                width: 50px;
+                height: 50px;
+                margin-right: 10px;
+            }
+            
+            .hot-item-name {
+                font-size: 13px;
+            }
+            
+            .game-tag, .tag {
+                font-size: 10px;
+                padding: 1px 6px;
+            }
+            
+            .hot-item-status {
+                gap: 8px;
+            }
+            
+            .status-badge {
+                font-size: 10px;
+                padding: 1px 6px;
+            }
+            
+            .order-count, .rating {
+                font-size: 10px;
+            }
+            
+            .hot-item-price {
+                font-size: 13px;
+            }
+        }
+
+        .voice-preview {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #f8f8f8;
+            padding: 3px 8px;
+            border-radius: 12px;
+        }
+
+        .voice-wave {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            height: 15px;
+        }
+
+        .wave-bar {
+            width: 1px;
+            height: 8px;
+            margin: 0 1px;
+        }
+
+        .wave-bar:nth-child(1) { height: 8px; animation-delay: 0.1s; }
+        .wave-bar:nth-child(2) { height: 12px; animation-delay: 0.2s; }
+        .wave-bar:nth-child(3) { height: 10px; animation-delay: 0.3s; }
+        .wave-bar:nth-child(4) { height: 14px; animation-delay: 0.4s; }
+        .wave-bar:nth-child(5) { height: 6px; animation-delay: 0.5s; }
+
+        @keyframes waveAnimation {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(0.6); }
+        }
+
+        .voice-duration {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .play-icon {
+            font-size: 14px;
+            color: #FF6B6B;
+        }
+
+        .hot-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .hot-item-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .hot-item-price {
+            color: #FF6B6B;
+            font-weight: 600;
+            font-size: 14px;
+            background: rgba(255, 107, 107, 0.1);
+            padding: 2px 8px;
+            border-radius: 20px;
+        }
+
+        .hot-item-tags {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            background: #f5f5f5;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #666;
+            border: 1px solid #eee;
+        }
+
+        .hot-item-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-badge {
+            background: rgba(52, 199, 89, 0.1);
+            color: #34C759;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-badge::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: #34C759;
+            border-radius: 50%;
+        }
+
+        .order-count {
+            font-size: 11px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .order-count::before {
+            content: '✨';
+            font-size: 14px;
+        }
+
+        .icon-gradient-1 { background: linear-gradient(135deg, #FF6B6B, #FF8E8E); }
+        .icon-gradient-2 { background: linear-gradient(135deg, #4ECDC4, #45B7D1); }
+        .icon-gradient-3 { background: linear-gradient(135deg, #A78BFA, #8B5CF6); }
+        .icon-gradient-4 { background: linear-gradient(135deg, #F59E0B, #D97706); }
+        .icon-gradient-5 { background: linear-gradient(135deg, #10B981, #059669); }
+
+        /* 添加滑动返回区域的样式 */
+        .slide-back-area {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 20px;
+            z-index: 1000;
+        }
+
+        /* 添加新的样式并修改相关样式 */
+        .name-voice {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .voice-preview {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background: #f5f5f5;
+        }
+
+        .voice-wave {
+            display: flex;
+            align-items: center;
+            gap: 1px;
+            height: 12px;
+        }
+
+        .wave-bar {
+            width: 1px;
+            background: #FF6B6B;
+            border-radius: 1px;
+            animation: waveAnimation 1s ease-in-out infinite;
+        }
+
+        .wave-bar:nth-child(1) { height: 6px; animation-delay: 0.1s; }
+        .wave-bar:nth-child(2) { height: 8px; animation-delay: 0.2s; }
+        .wave-bar:nth-child(3) { height: 6px; animation-delay: 0.3s; }
+
+        .play-icon {
+            font-size: 16px;
+            color: #FF6B6B;
+        }
+
+        .rating {
+            font-size: 11px;
+            color: #FF9800;
+            font-weight: 500;
+        }
+
+        /* 调整状态栏样式 */
+        .hot-item-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 确保其他元素大小不变 */
+        .hot-item {
+            padding: 12px;
+        }
+
+        .hot-item-avatar {
+            width: 50px;
+            height: 50px;
+        }
+
+        /* 添加弹窗相关样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 16px;
+            width: 280px;
+            transform: scale(0.8);
+            opacity: 0;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .modal-body {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .modal-icon {
+            margin-bottom: 16px;
+        }
+
+        .modal-icon .material-icons {
+            font-size: 48px;
+            color: #FF6B6B;
+        }
+
+        .modal-text {
+            font-size: 16px;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* 添加匹配弹窗相关样式 */
+        .match-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .match-content {
+            background: #fff;
+            width: 300px; /* 减小宽度 */
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .match-header {
+            padding: 12px 15px; /* 减小内边距 */
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .match-header h3 {
+            font-size: 15px; /* 减小标题字体 */
+            color: #333;
+            font-weight: 500;
+        }
+
+        .close-btn {
+            color: #999;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .match-body {
+            padding: 15px; /* 减小内边距 */
+        }
+
+        .form-group {
+            margin-bottom: 12px; /* 减小间距 */
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px; /* 减小标签字体 */
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 8px 10px; /* 减小输入框内边距 */
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 13px; /* 减小输入框字体 */
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 15px;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px; /* 减小单选框文字 */
+            color: #666;
+        }
+
+        .match-footer {
+            padding: 12px 15px; /* 减小底部内边距 */
+            border-top: 1px solid #f0f0f0;
+            text-align: right;
+        }
+
+        .match-submit {
+            background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
+            color: white;
+            border: none;
+            padding: 8px 20px; /* 减小按钮内边距 */
+            border-radius: 20px;
+            font-size: 13px; /* 减小按钮字体 */
+            cursor: pointer;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* 修改游戏分类样式 */
+        .game-category {
+            display: flex;
+            flex-wrap: nowrap;  /* 防止换行 */
+            overflow-x: auto;   /* 允许横向滚动 */
+            padding: 10px;
+            background: #fff;
+            border-radius: 12px;
+            margin: 3px auto;
+            width: 359px;
+            -webkit-overflow-scrolling: touch;  /* 优化iOS滚动 */
+            scrollbar-width: none;  /* 隐藏滚动条 */
+        }
+
+        .game-category::-webkit-scrollbar {
+            display: none;  /* 隐藏滚动条 */
+        }
+
+        .game-type {
+            display: flex;
+            align-items: center;
+            padding: 6px 12px;
+            background: #f8f8f8;
+            border-radius: 20px;
+            margin-right: 10px;
+            flex-shrink: 0;  /* 防止压缩 */
+            white-space: nowrap;  /* 文字不换行 */
+        }
+
+        .game-type i {
+            font-size: 16px;  /* 减小图标大小 */
+            margin-right: 4px;
+            color: #FF6B6B;
+        }
+
+        .game-type span {
+            font-size: 12px;
+            color: #333;
+            white-space: nowrap;  /* 文字不换行 */
+        }
+
+        /* 修改推荐区域容器样式 */
+        .recommend-section {
+            width: 359px;
+            margin: 3px auto;
+            padding: 12px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* 修改商品列表容器样式 */
+        .player-list {
+            width: 100%;
+            max-width: 359px;
+            margin: 0 auto;
+            padding: 3px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;  /* 统一卡片间距 */
+        }
+
+        /* 修改商品项样式 */
+        .hot-item {
+            width: 100%;
+            height: 100px;
+            padding: 12px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            position: relative;
+            border: 1px solid #FFE4E4;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        /* 修改头像样式 */
+        .hot-item-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            overflow: hidden;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        /* 修改商品信息布局 */
+        .hot-item-info {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 2px 0;
+        }
+
+        /* 修改商品头部样式 */
+        .hot-item-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .hot-item-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        /* 修改语音预览样式 */
+        .voice-preview {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #f8f8f8;
+            padding: 3px 8px;
+            border-radius: 12px;
+        }
+
+        /* 修改标签容器样式 */
+        .hot-item-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin: 4px 0;
+        }
+
+        /* 修改标签样式 */
+        .game-tag, .tag {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+        }
+
+        /* 修改底部状态栏样式 */
+        .hot-item-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .status-badge {
+            background: rgba(52, 199, 89, 0.1);
+            color: #34C759;
+            padding: 1px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+        }
+
+        .order-count, .rating {
+            color: #666;
+            font-size: 10px;
+        }
+
+        /* 修改价格样式 */
+        .hot-item-price {
+            position: absolute;
+            right: 12px;
+            top: 12px;
+            color: #FF6B6B;
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        /* 修改波浪动画样式 */
+        .wave-bar {
+            width: 1px;
+            height: 8px;
+            margin: 0 1px;
+        }
+
+        .play-icon {
+            font-size: 14px;
+        }
+
+        /* 小屏幕适配 */
+        @media screen and (max-width: 320px) {
+            .hot-item {
+                height: 90px;
+                padding: 10px;
+            }
+            
+            .hot-item-avatar {
+                width: 50px;
+                height: 50px;
+                margin-right: 10px;
+            }
+            
+            .hot-item-name {
+                font-size: 13px;
+            }
+            
+            .game-tag, .tag {
+                font-size: 10px;
+                padding: 1px 6px;
+            }
+            
+            .hot-item-status {
+                gap: 8px;
+            }
+        }
+
+        .search-container {
+            width: 359px;
+            margin: 3px auto;
+            padding: 8px;
+            z-index: 100;
+            position: relative;
+        }
+
+        .search-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border-radius: 12px;
+            padding: 4px 10px;
+            height: 32px;
+            flex: 1;
+            min-width: 0;
+            border: 1px solid #e0e0e0;
+        }
+
+        .search-icon {
+            color: #999;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+
+        .search-box input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 13px;
+            color: #333;
+            outline: none;
+            height: 32px;
+            padding: 0 6px;
+            margin: 0;
+            line-height: 32px;
+        }
+
+        .search-box input::placeholder {
+            color: #999;
+            font-size: 13px;
+        }
+
+        /* 小屏幕适配 */
+        @media screen and (max-width: 320px) {
+            .search-box {
+                height: 30px;
+            }
+            
+            .search-icon {
+                font-size: 15px;
+            }
+            
+            .search-box input {
+                font-size: 12px;
+                height: 30px;
+                line-height: 30px;
+            }
+        }
+
+        /* 修改所有容器的间距 */
+        .search-container,
+        .quick-match,
+        .game-category,
+        .recommend-section,
+        .hot-grid,
+        .hot-item {
+            margin: 3px auto;
+        }
+
+        /* 修改搜索容器样式 */
+        .search-container {
+            width: 359px;
+            padding: 8px;
+            z-index: 100;
+            position: relative;
+        }
+
+        /* 修改快速匹配容器样式 */
+        .quick-match {
+            width: 359px;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+            border-radius: 12px;
+            padding: 15px;
+            color: white;
+        }
+
+        /* 修改游戏分类容器样式 */
+        .game-category {
+            width: 359px;
+            display: flex;
+            overflow-x: auto;
+            padding: 10px;
+            background: #fff;
+            border-radius: 12px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        /* 修改推荐区域容器样式 */
+        .recommend-section {
+            width: 359px;
+            padding: 12px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* 修改商品列表容器样式 */
+        .hot-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        /* 修改商品项样式 */
+        .hot-item {
+            width: 100%;
+            height: 100px;
+            padding: 12px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            position: relative;
+            border: 1px solid #FFE4E4;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        /* 功能菜单容器 */
+        .feature-menu {
+            width: 359px;
+            margin: 3px auto;
+            padding: 12px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* 功能项样式 */
+        .feature-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* 功能按钮样式 */
+        .quick-match-btn {
+            width: 36px;  /* 减小按钮尺寸 */
+            height: 36px; /* 减小按钮尺寸 */
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E8E); /* 确保背景色显示 */
+        }
+
+        .quick-match-btn i {
+            color: white;
+            font-size: 18px; /* 减小图标大小 */
+        }
+
+        /* 修改功能文字样式 */
+        .feature-text {
+            font-size: 11px; /* 减小文字大小 */
+            color: #666;
+            text-align: center;
+        }
+
+        /* 小屏幕适配 */
+        @media screen and (max-width: 320px) {
+            .quick-match-btn {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .quick-match-btn i {
+                font-size: 16px;
+            }
+            
+            .feature-text {
+                font-size: 10px;
+            }
+        }
+
+        /* 在搜索框下方添加公告栏 */
+        .notice-bar {
+            width: 359px;
+            margin: 3px auto;
+            padding: 8px 12px;
+            border: 1px solid #FFE4E4;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            overflow: hidden;
+        }
+
+        .notice-content {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            height: 20px;
+        }
+
+        .notice-wrapper {
+            position: absolute;
+            white-space: nowrap;
+            display: inline-flex;
+            animation: scroll 40s linear infinite; /* 增加动画时间从20s到40s */
+        }
+
+        .notice-wrapper span {
+            font-size: 12px;
+            padding-right: 50px; /* 增加文字间距 */
+        }
+
+        /* 修改不同部分的文字颜色 */
+        .notice-wrapper span:nth-child(1) {
+            color: #FF6B6B; /* 红色主题 */
+        }
+
+        .notice-wrapper span:nth-child(2) {
+            color: #4ECDC4; /* 青色主题 */
+        }
+
+        .notice-wrapper span:nth-child(3) {
+            color: #A78BFA; /* 紫色主题 */
+        }
+
+        .notice-wrapper span:nth-child(4) {
+            color: #F59E0B; /* 橙色主题 */
+        }
+
+        .notice-icon {
+            color: #FF6B6B;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        @keyframes scroll {
+            0% {
+                transform: translateX(100%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        /* 小屏幕适配 */
+        @media screen and (max-width: 320px) {
+            .notice-bar {
+                width: 95%;
+                padding: 6px 10px;
+            }
+            
+            .notice-content span {
+                font-size: 11px;
+            }
+            
+            .notice-icon {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 添加滑动返回区域 -->
+    <div class="slide-back-area"></div>
+
+    <div class="content">
+        <!-- 在快速匹配上方添加搜索框 -->
+        <div class="search-container">
+            <div class="search-wrapper">
+                <div class="search-box">
+                    <i class="material-icons search-icon">search</i>
+                    <input type="text" placeholder="搜索陪玩" id="searchInput">
+                </div>
+            </div>
+        </div>
+
+        <!-- 在搜索框下方添加公告栏 -->
+        <div class="notice-bar">
+            <i class="material-icons notice-icon">campaign</i>
+            <div class="notice-content">
+                <div class="notice-wrapper">
+                    <span>为了保障您的财产安全，趣玩星球官方提醒您：切勿私自联系陪玩下单，如私自下单造成的任何损失，平台概不负责！请您注意甄别并提高安全意识。</span>
+                    <span>为了保障您的财产安全，趣玩星球官方提醒您：切勿私自联系陪玩下单，如私自下单造成的任何损失，平台概不负责！请您注意甄别并提高安全意识。</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 修改功能菜单 -->
+        <div class="feature-menu">
+            <div class="feature-item">
+                <div class="quick-match-btn" onclick="showMatchModal()">
+                    <i class="material-icons">flash_on</i>
+                </div>
+                <span class="feature-text">快速匹配</span>
+            </div>
+            
+            <div class="feature-item">
+                <div class="quick-match-btn" style="background: linear-gradient(135deg, #4ECDC4, #45B7D1);">
+                    <i class="material-icons">assignment</i>
+                </div>
+                <span class="feature-text">派单厅</span>
+            </div>
+            
+            <div class="feature-item">
+                <div class="quick-match-btn" style="background: linear-gradient(135deg, #A78BFA, #8B5CF6);">
+                    <i class="material-icons">card_giftcard</i>
+                </div>
+                <span class="feature-text">陪玩盲盒</span>
+            </div>
+            
+            <div class="feature-item">
+                <div class="quick-match-btn" style="background: linear-gradient(135deg, #F59E0B, #D97706);">
+                    <i class="material-icons">local_activity</i>
+                </div>
+                <span class="feature-text">最新活动</span>
+            </div>
+        </div>
+
+        <!-- 游戏分类 -->
+        <div class="game-category">
+            <div class="game-type">
+                <i class="material-icons">sports_esports</i>
+                <span>王者荣耀</span>
+            </div>
+            <div class="game-type">
+                <i class="material-icons">sports_esports</i>
+                <span>骗子酒馆</span>
+            </div>
+            <div class="game-type">
+                <i class="material-icons">sports_esports</i>
+                <span>和平精英</span>
+            </div>
+            <div class="game-type">
+                <i class="material-icons">sports_esports</i>
+                <span>英雄联盟</span>
+            </div>
+            <div class="game-type">
+                <i class="material-icons">sports_esports</i>
+                <span>永劫无间</span>
+            </div>
+        </div>
+
+        <!-- 热门推荐标题 - 移到容器外 -->
+        <div class="section-title">
+            <i class="material-icons" style="color: #FF6B6B;">whatshot</i>
+            <span>热门推荐</span>
+        </div>
+        <!-- 热门推荐容器 -->
+        <div class="recommend-section">
+            <div class="hot-grid">
+                <!-- 王者荣耀陪玩 -->
+                <div class="hot-item">
+                    <div class="hot-item-avatar">
+                        <img src="https://s1.imagehub.cc/images/2024/11/08/517863d36cc7513386d28d457636008d.jpeg" alt="陪玩头像">
+                    </div>
+                    <div class="hot-item-info">
+                        <div class="hot-item-header">
+                            <div class="name-voice">
+                                <div class="hot-item-name">小甜甜</div>
+                                <div class="voice-preview">
+                                    <i class="material-icons play-icon">play_circle</i>
+                                    <div class="voice-wave">
+                                        <div class="wave-bar"></div>
+                                        <div class="wave-bar"></div>
+                                        <div class="wave-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="hot-item-price">￥30/小时</div>
+                        </div>
+                        <div class="hot-item-tags">
+                            <span class="tag">王者荣耀</span>
+                            <span class="tag">国服射手</span>
+                            <span class="tag">声优主播</span>
+                        </div>
+                        <div class="hot-item-status">
+                            <span class="status-badge">在线</span>
+                            <span class="order-count">接单 2000+</span>
+                            <span class="rating">⭐4.9</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 英雄联陪玩 -->
+                <div class="hot-item">
+                    <div class="hot-item-avatar">
+                        <img src="https://s1.imagehub.cc/images/2024/11/08/517863d36cc7513386d28d457636008d.jpeg" alt="陪玩头像">
+                    </div>
+                    <div class="hot-item-info">
+                        <div class="hot-item-header">
+                            <div class="name-voice">
+                                <div class="hot-item-name">阿杰</div>
+                                <div class="voice-preview">
+                                    <i class="material-icons play-icon">play_circle</i>
+                                    <div class="voice-wave">
+                                        <div class="wave-bar"></div>
+                                        <div class="wave-bar"></div>
+                                        <div class="wave-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="hot-item-price">￥50/小时</div>
+                        </div>
+                        <div class="hot-item-tags">
+                            <span class="tag">英雄联盟</span>
+                            <span class="tag">王者段位</span>
+                            <span class="tag">技术流</span>
+                        </div>
+                        <div class="hot-item-status">
+                            <span class="status-badge">在线</span>
+                            <span class="order-count">接单 1500+</span>
+                            <span class="rating">⭐4.8</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 和平精英陪玩 -->
+                <div class="hot-item">
+                    <div class="hot-item-avatar">
+                        <img src="https://s1.imagehub.cc/images/2024/11/08/517863d36cc7513386d28d457636008d.jpeg" alt="陪玩头像">
+                    </div>
+                    <div class="hot-item-info">
+                        <div class="hot-item-header">
+                            <div class="name-voice">
+                                <div class="hot-item-name">小鱼儿</div>
+                                <div class="voice-preview">
+                                    <i class="material-icons play-icon">play_circle</i>
+                                    <div class="voice-wave">
+                                        <div class="wave-bar"></div>
+                                        <div class="wave-bar"></div>
+                                        <div class="wave-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="hot-item-price">￥40/小时</div>
+                        </div>
+                        <div class="hot-item-tags">
+                            <span class="tag">和平精英</span>
+                            <span class="tag">职业选手</span>
+                            <span class="tag">带飞</span>
+                        </div>
+                        <div class="hot-item-status">
+                            <span class="status-badge">在线</span>
+                            <span class="order-count">接单 1800+</span>
+                            <span class="rating">⭐4.7</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 骗子酒馆陪玩 -->
+                <div class="hot-item">
+                    <div class="hot-item-avatar">
+                        <img src="https://s1.imagehub.cc/images/2024/11/08/517863d36cc7513386d28d457636008d.jpeg" alt="陪玩头像">
+                    </div>
+                    <div class="hot-item-info">
+                        <div class="hot-item-header">
+                            <div class="name-voice">
+                                <div class="hot-item-name">小可爱</div>
+                                <div class="voice-preview">
+                                    <i class="material-icons play-icon">play_circle</i>
+                                    <div class="voice-wave">
+                                        <div class="wave-bar"></div>
+                                        <div class="wave-bar"></div>
+                                        <div class="wave-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="hot-item-price">￥35/小时</div>
+                        </div>
+                        <div class="hot-item-tags">
+                            <span class="tag">骗子酒馆</span>
+                            <span class="tag">趣味玩家</span>
+                            <span class="tag">解说</span>
+                        </div>
+                        <div class="hot-item-status">
+                            <span class="status-badge">在线</span>
+                            <span class="order-count">接单 1200+</span>
+                            <span class="rating">⭐4.8</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 永劫无间陪玩 -->
+                <div class="hot-item">
+                    <div class="hot-item-avatar">
+                        <img src="https://s1.imagehub.cc/images/2024/11/08/517863d36cc7513386d28d457636008d.jpeg" alt="陪玩头像">
+                    </div>
+                    <div class="hot-item-info">
+                        <div class="hot-item-header">
+                            <div class="name-voice">
+                                <div class="hot-item-name">小剑</div>
+                                <div class="voice-preview">
+                                    <i class="material-icons play-icon">play_circle</i>
+                                    <div class="voice-wave">
+                                        <div class="wave-bar"></div>
+                                        <div class="wave-bar"></div>
+                                        <div class="wave-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="hot-item-price">￥45/小时</div>
+                        </div>
+                        <div class="hot-item-tags">
+                            <span class="tag">永劫无间</span>
+                            <span class="tag">高端局</span>
+                            <span class="tag">带飞</span>
+                        </div>
+                        <div class="hot-item-status">
+                            <span class="status-badge">在线</span>
+                            <span class="order-count">接单 1600+</span>
+                            <span class="rating">⭐4.8</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 在body标签最后添加弹窗组件 -->
+    <div class="modal" id="customModal">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="modal-icon">
+                    <i class="material-icons" id="modalIcon">check_circle</i>
+                </div>
+                <div class="modal-text" id="modalText"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 在body标签末尾添加匹配弹窗 -->
+    <div class="match-modal" id="matchModal">
+        <div class="match-content">
+            <div class="match-header">
+                <h3>快速匹配</h3>
+                <div class="close-btn">×</div>
+            </div>
+            <div class="match-body">
+                <div class="form-group">
+                    <label>选择游戏</label>
+                    <select id="gameSelect" class="form-input">
+                        <option value="">请选择游戏</option>
+                        <option value="王者荣耀">王者荣耀</option>
+                        <option value="英雄联盟">英雄联盟</option>
+                        <option value="和平精英">和平精英</option>
+                        <option value="骗子酒馆">骗子酒馆</option>
+                        <option value="永劫无间">永劫无间</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>陪玩性别</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="gender" value="不限">
+                            <span>不限</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="gender" value="男">
+                            <span>男</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="gender" value="女">
+                            <span>女</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>游戏段位</label>
+                    <select id="rankSelect" class="form-input">
+                        <option value="">请先选择游戏</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>备注信息</label>
+                    <textarea id="remarkText" class="form-input" placeholder="请输入备注信息（选填）" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="match-footer">
+                <button class="match-submit" onclick="submitMatch()">开始匹配</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 添加滑动返回功能
+        let startX = 0;
+        let startY = 0;
+        const threshold = 50; // 触发返回的阈值
+
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (startX < 50) { // 只在屏幕左侧边缘检测滑动
+                const deltaX = e.touches[0].clientX - startX;
+                const deltaY = Math.abs(e.touches[0].clientY - startY);
+                
+                // 如果水平滑��距离大于垂直滑动距离，阻止页面滚动
+                if (deltaX > deltaY && deltaX > 0) {
+                    e.preventDefault();
+                }
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            if (startX < 50) { // 只在屏幕左侧边缘检测滑动
+                const deltaX = e.changedTouches[0].clientX - startX;
+                const deltaY = Math.abs(e.changedTouches[0].clientY - startY);
+                
+                // 如果水��滑动距离大��阈值且大于垂直滑动距离，触发返回
+                if (deltaX > threshold && deltaX > deltaY) {
+                    window.location.href = 'quwanxingqiu.html';
+                }
+            }
+        });
+
+        // 替换原有的alert为自定义��窗
+        function showModal(text, icon = 'check_circle', duration = 2000) {
+            const modal = document.getElementById('customModal');
+            const modalText = document.getElementById('modalText');
+            const modalIcon = document.getElementById('modalIcon');
+
+            modalText.textContent = text;
+            modalIcon.textContent = icon;
+            modal.classList.add('show');
+
+            // 自动关闭
+            setTimeout(() => {
+                modal.classList.remove('show');
+            }, duration);
+        }
+
+        // 更新所有事件监听器中的alert为showModal
+        document.querySelector('.quick-match-btn').addEventListener('click', () => {
+            document.getElementById('matchModal').style.display = 'flex';
+        });
+
+        document.querySelectorAll('.game-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const gameName = item.querySelector('.game-name').textContent;
+                showModal(`您选择了${gameName}`, 'sports_esports');
+            });
+        });
+
+        document.querySelectorAll('.voice-preview').forEach(voicePreview => {
+            voicePreview.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const playIcon = this.querySelector('.play-icon');
+                const isPlaying = playIcon.textContent === 'pause_circle';
+                
+                document.querySelectorAll('.voice-preview').forEach(preview => {
+                    preview.querySelector('.play-icon').textContent = 'play_circle';
+                    preview.classList.remove('playing');
+                });
+
+                if (!isPlaying) {
+                    playIcon.textContent = 'pause_circle';
+                    this.classList.add('playing');
+                    showModal('播放语音...', 'volume_up');
+                } else {
+                    playIcon.textContent = 'play_circle';
+                    this.classList.remove('playing');
+                    showModal('暂停播放', 'volume_off');
+                }
+            });
+        });
+
+        // 击窗背景关闭弹窗
+        document.getElementById('customModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                e.target.classList.remove('show');
+            }
+        });
+
+        // 修改商品点击事件，传递正确的游戏分类
+        document.querySelectorAll('.hot-item').forEach(item => {
+            item.addEventListener('click', () => {
+                // 获取商品信息
+                const productInfo = {
+                    name: item.querySelector('.hot-item-name').textContent,
+                    price: item.querySelector('.hot-item-price').textContent,
+                    avatar: item.querySelector('.hot-item-avatar img').src,
+                    tags: Array.from(item.querySelectorAll('.tag')).map(tag => tag.textContent),
+                    rating: item.querySelector('.rating').textContent,
+                    orderCount: item.querySelector('.order-count').textContent,
+                    gameType: item.querySelector('.tag').textContent, // 获取第一个tag作为游戏类型
+                    description: "专业陪玩，可代练、上分、娱乐。温柔声优，陪您畅玩游戏的美好时光~",
+                    serviceTime: "9:00-23:00",
+                    stats: {
+                        goodRate: "98%",
+                        orderCount: item.querySelector('.order-count').textContent.replace('接单 ', ''),
+                        experience: "3年+"
+                    }
+                };
+                
+                // 将商品信息存储到 localStorage
+                localStorage.setItem('currentProduct', JSON.stringify(productInfo));
+                
+                // 跳转到商品详情页
+                window.location.href = 'product-detail.html';
+            });
+        });
+
+        // 修改语音预览点击事件，防止冒泡
+        document.querySelectorAll('.voice-preview').forEach(voicePreview => {
+            voicePreview.addEventListener('click', function(e) {
+                e.stopPropagation(); // 阻止件冒泡到商品项
+                const playIcon = this.querySelector('.play-icon');
+                const isPlaying = playIcon.textContent === 'pause_circle';
+                
+                document.querySelectorAll('.voice-preview').forEach(preview => {
+                    preview.querySelector('.play-icon').textContent = 'play_circle';
+                    preview.classList.remove('playing');
+                });
+
+                if (!isPlaying) {
+                    playIcon.textContent = 'pause_circle';
+                    this.classList.add('playing');
+                    showModal('播放语音...', 'volume_up');
+                } else {
+                    playIcon.textContent = 'play_circle';
+                    this.classList.remove('playing');
+                    showModal('暂停播放', 'volume_off');
+                }
+            });
+        });
+
+        // 关闭匹配弹窗
+        function closeMatchModal() {
+            const modal = document.querySelector('.match-modal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // 改提交匹配函数
+        function submitMatch() {
+            const game = document.getElementById('gameSelect').value;
+            const gender = document.querySelector('input[name="gender"]:checked')?.value;
+            const rank = document.getElementById('rankSelect').value;
+            const remark = document.getElementById('remarkText').value;
+
+            // 表单验证
+            if (!game) {
+                showModal('请选择游戏', 'warning');
+                return;
+            }
+            if (!gender) {
+                showModal('请选择性别', 'warning');
+                return;
+            }
+            if (!rank) {
+                showModal('请选择段位', 'warning');
+                return;
+            }
+
+            // 关闭匹配弹窗
+            closeMatchModal();
+
+            // 显示匹配中状态
+            showModal('正在为您匹配合适的陪玩...', 'flash_on', 3000);
+
+            // 获取所有陪玩信息
+            const players = Array.from(document.querySelectorAll('.hot-item')).map(item => ({
+                name: item.querySelector('.hot-item-name').textContent,
+                avatar: item.querySelector('.hot-item-avatar img').src,
+                game: item.querySelector('.tag').textContent, // 第一个tag通常是游戏类型
+                gender: item.dataset.gender || '女', // 可以在HTML中添加data-gender属性
+                rank: item.dataset.rank || '王者', // 可以在HTML中添加data-rank属性
+                price: item.querySelector('.hot-item-price').textContent,
+                rating: item.querySelector('.rating').textContent,
+                tags: Array.from(item.querySelectorAll('.tag')).map(tag => tag.textContent)
+            }));
+
+            // 匹配逻辑
+            const matchedPlayer = findMatch(players, {
+                game,
+                gender,
+                rank
+            });
+
+            // 模��匹配过程
+            setTimeout(() => {
+                if (matchedPlayer) {
+                    showModal('匹配成功！正在为您跳转...', 'check_circle', 2000);
+                    
+                    // 存储匹配到的陪玩信息
+                    const productInfo = {
+                        name: matchedPlayer.name,
+                        avatar: matchedPlayer.avatar,
+                        price: matchedPlayer.price,
+                        tags: matchedPlayer.tags,
+                        rating: matchedPlayer.rating,
+                        gameType: matchedPlayer.game,
+                        description: "专业陪玩可代练、上分、娱乐。温柔声优，陪您畅玩游戏的美好时光~",
+                        serviceTime: "9:00-23:00",
+                        stats: {
+                            goodRate: "98%",
+                            orderCount: "1000+",
+                            experience: "2年+"
+                        }
+                    };
+                    
+                    localStorage.setItem('currentProduct', JSON.stringify(productInfo));
+                    
+                    // 延迟跳转到商品详情页
+                    setTimeout(() => {
+                        window.location.href = 'product-detail.html';
+                    }, 2000);
+                } else {
+                    // 显示带有客服按钮的失败弹窗
+                    showMatchFailModal();
+                }
+            }, 3000);
+        }
+
+        // 添加匹配算法
+        function findMatch(players, criteria) {
+            // 根据游戏类型、性别和段位进行匹配
+            const matches = players.filter(player => {
+                const gameMatch = player.game === criteria.game;
+                const genderMatch = criteria.gender === '不限' || player.gender === criteria.gender;
+                
+                // 段位匹配逻辑
+                let rankMatch = false;
+                switch (criteria.game) {
+                    case '王者荣耀':
+                        rankMatch = isRankMatch('wzry', player.rank, criteria.rank);
+                        break;
+                    case '英雄联盟':
+                        rankMatch = isRankMatch('lol', player.rank, criteria.rank);
+                        break;
+                    case '和平精英':
+                        rankMatch = isRankMatch('peace', player.rank, criteria.rank);
+                        break;
+                    case '骗子酒馆':
+                        rankMatch = isRankMatch('liar', player.rank, criteria.rank);
+                        break;
+                    case '永劫无间':
+                        rankMatch = isRankMatch('narake', player.rank, criteria.rank);
+                        break;
+                }
+
+                return gameMatch && genderMatch && rankMatch;
+            });
+
+            // 如果有多个匹配，随机返回一个
+            return matches.length > 0 ? matches[Math.floor(Math.random() * matches.length)] : null;
+        }
+
+        // 添加段位匹配逻辑
+        function isRankMatch(game, playerRank, criteriaRank) {
+            const rankLevels = {
+                wzry: ['青铜', '白银', '黄金', '铂金', '钻石', '星耀', '荣耀王者', '最强王者'],
+                lol: ['黑铁', '青铜', '白银', '黄金', '铂金', '钻石', '大师', '王者'],
+                peace: ['无��位', '青铜', '白银', '黄金', '铂金', '钻石', '王牌'],
+                liar: ['新手', '青铜', '白银', '黄金', '铂金', '钻石', '大师'],
+                narake: ['青铜', '白银', '黄金', '铂金', '星耀', '天王', '至尊', '无双']
+            };
+
+            const ranks = rankLevels[game];
+            const playerRankIndex = ranks.indexOf(playerRank);
+            const criteriaRankIndex = ranks.indexOf(criteriaRank);
+
+            // 陪玩段位应该大于等于用户要求的段位
+            return playerRankIndex >= criteriaRankIndex;
+        }
+
+        // 点击背景关闭弹窗
+        document.getElementById('matchModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                closeMatchModal();
+            }
+        });
+
+        // 修改游戏选择的事件监听
+        document.getElementById('gameSelect').addEventListener('change', function() {
+            const rankSelect = document.getElementById('rankSelect');
+            rankSelect.innerHTML = '<option value="">请选择段位</option>';
+            
+            // 根据选择的游戏添加对应的段位选项
+            switch(this.value) {
+                case '王者荣耀':
+                    const wzryRanks = [
+                        '最强王者', '荣耀王者', '王者星耀', '钻石', 
+                        '铂金', '黄金', '白银', '青铜'
+                    ];
+                    wzryRanks.forEach(rank => {
+                        rankSelect.add(new Option(rank, rank));
+                    });
+                    break;
+                    
+                case '英雄联盟':
+                    const lolRanks = [
+                        '王者', '大师', '钻石', '铂金',
+                        '黄金', '白银', '青铜', '黑铁'
+                    ];
+                    lolRanks.forEach(rank => {
+                        rankSelect.add(new Option(rank, rank));
+                    });
+                    break;
+                    
+                case '和平精英':
+                    const peaceRanks = [
+                        '王牌', '钻石', '铂金', '黄金',
+                        '白银', '青铜', '倔强青铜'
+                    ];
+                    peaceRanks.forEach(rank => {
+                        rankSelect.add(new Option(rank, rank));
+                    });
+                    break;
+                    
+                case '骗子酒馆':
+                    const liarRanks = [
+                        '大师', '钻石', '铂金', '黄金',
+                        '白银', '青铜'
+                    ];
+                    liarRanks.forEach(rank => {
+                        rankSelect.add(new Option(rank, rank));
+                    });
+                    break;
+                    
+                case '永劫无间':
+                    const narakeRanks = [
+                        '无双', '至尊', '天王', '星耀', '铂金',
+                        '黄金', '白银', '青铜'
+                    ];
+                    narakeRanks.forEach(rank => {
+                        rankSelect.add(new Option(rank, rank));
+                    });
+                    break;
+            }
+        });
+
+        // 添加匹配失败弹窗函数
+        function showMatchFailModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal show';
+            modal.innerHTML = `
+                <div class="modal-content" style="padding: 20px;">
+                    <div class="modal-body" style="gap: 15px;">
+                        <div class="modal-icon">
+                            <i class="material-icons" style="color: #FF6B6B;">error_outline</i>
+                        </div>
+                        <div class="modal-text" style="margin-bottom: 15px;">
+                            未找到合适的陪玩，请调整匹配条件
+                        </div>
+                        <button onclick="contactCustomerService()" 
+                            style="
+                                background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+                                color: white;
+                                border: none;
+                                padding: 10px 20px;
+                                border-radius: 20px;
+                                font-size: 14px;
+                                box-shadow: 0 2px 8px rgba(255, 107, 107, 0.2);
+                                cursor: pointer;
+                            "
+                        >
+                            联系客服
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // 点击背景关闭弹窗
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+
+            // 3秒后自动关闭
+            setTimeout(() => {
+                modal.remove();
+            }, 5000);
+        }
+
+        // 添加联系客服功能
+        function contactCustomerService() {
+            // 这里可以添加实际的客服联系逻辑
+            showModal('正在为您连接客服...', 'headset_mic');
+            // 可以跳转到客服页面或打开服聊天窗口
+        }
+
+        // 添加类菜单切换功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const gameTypes = document.querySelectorAll('.game-type');
+            
+            gameTypes.forEach(type => {
+                type.addEventListener('click', function() {
+                    const gameName = this.querySelector('span').textContent;
+                    updatePlayerList(gameName);
+                });
+            });
+        });
+
+        // 更新陪玩列表函数
+        function updatePlayerList(gameType) {
+            const playerList = document.querySelector('.hot-grid');
+            
+            // 根据不同游戏类型显示不同的陪玩列表
+            switch(gameType) {
+                case '王者荣耀':
+                    playerList.innerHTML = `
+                        <div class="hot-item">
+                            <div class="hot-item-avatar">
+                                <img src="https://s1.imagehub.cc/images/2024/11/08/517863d36cc7513386d28d457636008d.jpeg" alt="陪玩头像">
+                            </div>
+                            <div class="hot-item-info">
+                                <div class="hot-item-header">
+                                    <div class="name-voice">
+                                        <div class="hot-item-name">小甜甜</div>
+                                        <div class="voice-preview">
+                                            <i class="material-icons play-icon">play_circle</i>
+                                            <div class="voice-wave">
+                                                <div class="wave-bar"></div>
+                                                <div class="wave-bar"></div>
+                                                <div class="wave-bar"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="hot-item-price">￥30/小时</div>
+                                </div>
+                                <div class="hot-item-tags">
+                                    <span class="game-tag wangzhe">王者荣耀</span>
+                                    <span class="tag">国服射手</span>
+                                    <span class="tag">声优主播</span>
+                                </div>
+                                <div class="hot-item-status">
+                                    <span class="status-badge">在线</span>
+                                    <span class="order-count">接单 2000+</span>
+                                    <span class="rating">⭐4.9</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case '骗子酒馆':
+                    playerList.innerHTML = `
+                        <div class="hot-item">
+                            <div class="hot-item-avatar">
+                                <img src="https://s1.imagehub.cc/images/2024/11/08/517863d36cc7513386d28d457636008d.jpeg" alt="陪玩头像">
+                            </div>
+                            <div class="hot-item-info">
+                                <div class="hot-item-header">
+                                    <div class="name-voice">
+                                        <div class="hot-item-name">小雨</div>
+                                        <div class="voice-preview">
+                                            <i class="material-icons play-icon">play_circle</i>
+                                            <div class="voice-wave">
+                                                <div class="wave-bar"></div>
+                                                <div class="wave-bar"></div>
+                                                <div class="wave-bar"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="hot-item-price">￥45/小时</div>
+                                </div>
+                                <div class="hot-item-tags">
+                                    <span class="game-tag pianzijg">骗子酒馆</span>
+                                    <span class="tag">趣味玩家</span>
+                                    <span class="tag">解说</span>
+                                </div>
+                                <div class="hot-item-status">
+                                    <span class="status-badge">在线</span>
+                                    <span class="order-count">接单 1600+</span>
+                                    <span class="rating">⭐4.8</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case '和平精英':
+                    playerList.innerHTML = `
+                        <div class="hot-item">
+                            <div class="hot-item-avatar">
+                                <img src="https://s1.imagehub.cc/images/2024/11/08/517863d36cc7513386d28d457636008d.jpeg" alt="陪玩头像">
+                            </div>
+                            <div class="hot-item-info">
+                                <div class="hot-item-header">
+                                    <div class="name-voice">
+                                        <div class="hot-item-name">小鱼儿</div>
+                                        <div class="voice-preview">
+                                            <i class="material-icons play-icon">play_circle</i>
+                                            <div class="voice-wave">
+                                                <div class="wave-bar"></div>
+                                                <div class="wave-bar"></div>
+                                                <div class="wave-bar"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="hot-item-price">￥40/小时</div>
+                                </div>
+                                <div class="hot-item-tags">
+                                    <span class="game-tag heping">和平精英</span>
+                                    <span class="tag">职业选手</span>
+                                    <span class="tag">带飞</span>
+                                </div>
+                                <div class="hot-item-status">
+                                    <span class="status-badge">在线</span>
+                                    <span class="order-count">接单 1800+</span>
+                                    <span class="rating">⭐4.7</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case '英雄联盟':
+                    playerList.innerHTML = `
+                        <div class="hot-item">
+                            <div class="hot-item-avatar">
+                                <img src="https://s1.imagehub.cc/images/2024/11/08/517863d36cc7513386d28d457636008d.jpeg" alt="陪玩头像">
+                            </div>
+                            <div class="hot-item-info">
+                                <div class="hot-item-header">
+                                    <div class="name-voice">
+                                        <div class="hot-item-name">阿杰</div>
+                                        <div class="voice-preview">
+                                            <i class="material-icons play-icon">play_circle</i>
+                                            <div class="voice-wave">
+                                                <div class="wave-bar"></div>
+                                                <div class="wave-bar"></div>
+                                                <div class="wave-bar"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="hot-item-price">￥50/小时</div>
+                                </div>
+                                <div class="hot-item-tags">
+                                    <span class="game-tag lol">英雄联盟</span>
+                                    <span class="tag">王者段位</span>
+                                    <span class="tag">技术流</span>
+                                </div>
+                                <div class="hot-item-status">
+                                    <span class="status-badge">在线</span>
+                                    <span class="order-count">接单 1500+</span>
+                                    <span class="rating">⭐4.8</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case '永劫无间':
+                    playerList.innerHTML = `
+                        <div class="hot-item">
+                            <div class="hot-item-avatar">
+                                <img src="https://s1.imagehub.cc/images/2024/11/08/517863d36cc7513386d28d457636008d.jpeg" alt="陪玩头像">
+                            </div>
+                            <div class="hot-item-info">
+                                <div class="hot-item-header">
+                                    <div class="name-voice">
+                                        <div class="hot-item-name">小剑</div>
+                                        <div class="voice-preview">
+                                            <i class="material-icons play-icon">play_circle</i>
+                                            <div class="voice-wave">
+                                                <div class="wave-bar"></div>
+                                                <div class="wave-bar"></div>
+                                                <div class="wave-bar"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="hot-item-price">￥45/小时</div>
+                                </div>
+                                <div class="hot-item-tags">
+                                    <span class="game-tag yongjie">永劫无间</span>
+                                    <span class="tag">永动圆环</span>
+                                    <span class="tag">带飞</span>
+                                </div>
+                                <div class="hot-item-status">
+                                    <span class="status-badge">在线</span>
+                                    <span class="order-count">接单 1600+</span>
+                                    <span class="rating">⭐4.8</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+            }
+            
+            // 重新绑定事件
+            bindEvents();
+        }
+
+        // 添加搜索功能的JavaScript
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const hotItems = document.querySelectorAll('.hot-item');
+            
+            hotItems.forEach(item => {
+                const name = item.querySelector('.hot-item-name').textContent.toLowerCase();
+                const tags = Array.from(item.querySelectorAll('.tag')).map(tag => tag.textContent.toLowerCase());
+                const price = item.querySelector('.hot-item-price').textContent.toLowerCase();
+                
+                // 搜索名字、标签和价格
+                if (name.includes(searchTerm) || 
+                    tags.some(tag => tag.includes(searchTerm)) || 
+                    price.includes(searchTerm)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+
+        // 修改匹配弹窗中的游戏选项
+        function showMatchModal() {
+            // 先移除可能存在的旧弹窗
+            const existingModal = document.querySelector('.match-modal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            const modal = document.createElement('div');
+            modal.className = 'match-modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `
+                <div class="match-content">
+                    <div class="match-header">
+                        <h3>快速匹配</h3>
+                        <div class="close-btn" style="cursor: pointer; padding: 8px;">×</div>
+                    </div>
+                    <div class="match-body">
+                        <div class="form-group">
+                            <label>选择游戏</label>
+                            <select id="gameSelect" class="form-input">
+                                <option value="">请选择游戏</option>
+                                <option value="王者荣耀">王者荣耀</option>
+                                <option value="英雄联盟">英雄联盟</option>
+                                <option value="和平精英">和平精英</option>
+                                <option value="骗子酒馆">骗子酒馆</option>
+                                <option value="永劫无间">永劫无间</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>陪玩性别</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="gender" value="不限">
+                                    <span>不限</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="gender" value="男">
+                                    <span>男</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="gender" value="女">
+                                    <span>女</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>游戏段位</label>
+                            <select id="rankSelect" class="form-input">
+                                <option value="">请先选择游戏</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>备注信息</label>
+                            <textarea id="remarkText" class="form-input" placeholder="请输入备注信息（选填）" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="match-footer">
+                        <button class="match-submit" onclick="submitMatch()">开始匹配</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+
+            // 直接给关闭按钮添加点击事件
+            const closeBtn = modal.querySelector('.close-btn');
+            closeBtn.addEventListener('click', () => {
+                modal.remove();
+            });
+
+            // 点击遮罩层关闭
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+
+            // 绑定游戏选择事件
+            const gameSelect = modal.querySelector('#gameSelect');
+            const rankSelect = modal.querySelector('#rankSelect');
+            
+            gameSelect.addEventListener('change', function() {
+                rankSelect.innerHTML = '<option value="">请选择段位</option>';
+                
+                const ranks = {
+                    '王者荣耀': ['最强王者', '荣耀王者', '王者星耀', '钻石', '铂金', '黄金', '白银', '青铜'],
+                    '英雄联盟': ['王者', '大师', '钻石', '铂金', '黄金', '白银', '青铜', '黑铁'],
+                    '和平精英': ['王牌', '钻石', '铂金', '黄金', '白银', '青铜', '倔强青铜'],
+                    '骗子酒馆': ['大师', '钻石', '铂金', '黄金', '白银', '青铜'],
+                    '永劫无间': ['无双', '至尊', '天王', '星耀', '铂金', '黄金', '白银', '青铜']
+                };
+
+                const selectedGame = this.value;
+                if (selectedGame && ranks[selectedGame]) {
+                    ranks[selectedGame].forEach(rank => {
+                        const option = document.createElement('option');
+                        option.value = rank;
+                        option.textContent = rank;
+                        rankSelect.appendChild(option);
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+</html> 

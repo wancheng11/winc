@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>天下荣耀</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/ammo.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        #game-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .ui-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* 游戏UI样式 */
+        .game-ui {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* 英雄信息 */
+        .hero-info {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 10px;
+            color: white;
+        }
+
+        .hero-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            border: 2px solid gold;
+        }
+
+        .hero-stats {
+            margin-top: 5px;
+        }
+
+        /* 技能栏 */
+        .skill-bar {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            pointer-events: auto;
+        }
+
+        .skill-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 30px;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid gold;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            position: relative;
+        }
+
+        .skill-cooldown {
+            position: absolute;
+            bottom: -20px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 12px;
+        }
+
+        /* 虚拟摇杆 */
+        .virtual-joystick {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 150px;
+            height: 150px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 75px;
+            pointer-events: auto;
+        }
+
+        .joystick-handle {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 30px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* 小地图 */
+        .minimap {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            width: 200px;
+            height: 200px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            border: 2px solid gold;
+        }
+
+        /* 计分板 */
+        .scoreboard {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 10px;
+            color: white;
+            display: flex;
+            gap: 20px;
+        }
+
+        .team-score {
+            text-align: center;
+        }
+
+        /* 技能特效 */
+        .skill-effect {
+            position: absolute;
+            pointer-events: none;
+        }
+
+        /* 伤害数字 */
+        .damage-text {
+            position: absolute;
+            color: red;
+            font-weight: bold;
+            animation: float-up 1s ease-out forwards;
+        }
+
+        @keyframes float-up {
+            from {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+        }
+
+        /* 返回按钮 */
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(0,0,0,0.5);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            pointer-events: auto;
+        }
+
+        .back-button:active {
+            transform: scale(0.95);
+        }
+
+        /* 加载屏幕 */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 2000;
+        }
+
+        .loading-progress {
+            width: 200px;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            margin-top: 20px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: gold;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* 游戏菜单 */
+        .game-menu {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            display: none;
+            z-index: 1000;
+        }
+
+        .menu-button {
+            background: gold;
+            border: none;
+            color: black;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-screen">
+        <h2>天下荣耀</h2>
+        <div class="loading-progress">
+            <div class="progress-bar"></div>
+        </div>
+    </div>
+
+    <canvas id="game-canvas"></canvas>
+
+    <div class="game-ui">
+        <button class="back-button" onclick="returnToMenu()">
+            <i class="material-icons">arrow_back</i>
+        </button>
+
+        <div class="hero-info">
+            <img src="hero-avatar.jpg" class="hero-avatar">
+            <div class="hero-stats">
+                <div class="hp-bar"></div>
+                <div class="mp-bar"></div>
+            </div>
+        </div>
+
+        <div class="scoreboard">
+            <div class="team-score">
+                <div class="team-name">蓝队</div>
+                <div class="score">0</div>
+            </div>
+            <div class="team-score">
+                <div class="team-name">红队</div>
+                <div class="score">0</div>
+            </div>
+        </div>
+
+        <div class="minimap"></div>
+
+        <div class="virtual-joystick">
+            <div class="joystick-handle"></div>
+        </div>
+
+        <div class="skill-bar">
+            <button class="skill-btn" data-skill="1">Q</button>
+            <button class="skill-btn" data-skill="2">W</button>
+            <button class="skill-btn" data-skill="3">E</button>
+            <button class="skill-btn" data-skill="4">R</button>
+        </div>
+    </div>
+
+    <div class="game-menu">
+        <h2>游戏菜单</h2>
+        <button class="menu-button" onclick="resumeGame()">继续游戏</button>
+        <button class="menu-button" onclick="restartGame()">重新开始</button>
+        <button class="menu-button" onclick="returnToMenu()">返回主菜单</button>
+    </div>
+
+    <script>
+        // 游戏核心变量
+        let scene, camera, renderer, controls;
+        let player, terrain, enemies = [];
+        let animations = {};
+        let mixer;
+        let clock = new THREE.Clock();
+        let isGamePaused = false;
+
+        // 物理引擎相关
+        let physicsWorld;
+        const rigidBodies = [];
+        const tmpTrans = new Ammo.btTransform();
+
+        // 初始化游戏
+        async function initGame() {
+            try {
+                // 初始化Three.js场景
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x87ceeb); // 天空蓝色背景
+
+                // 创建相机
+                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.set(0, 5, 10);
+
+                // 创建渲染器
+                renderer = new THREE.WebGLRenderer({
+                    canvas: document.getElementById('game-canvas'),
+                    antialias: true
+                });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.shadowMap.enabled = true;
+
+                // 添加环境光和平行光
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+                scene.add(ambientLight);
+
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(0, 10, 10);
+                directionalLight.castShadow = true;
+                scene.add(directionalLight);
+
+                // 创建地面
+                const groundGeometry = new THREE.PlaneGeometry(100, 100);
+                const groundMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x91785b,
+                    roughness: 0.8,
+                    metalness: 0.2
+                });
+                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                ground.rotation.x = -Math.PI / 2;
+                ground.receiveShadow = true;
+                scene.add(ground);
+
+                // 添加一些基础的3D对象作为临时内容
+                // 添加一个英雄角色（临时用一个立方体代替）
+                const heroGeometry = new THREE.BoxGeometry(1, 2, 1);
+                const heroMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+                player = new THREE.Mesh(heroGeometry, heroMaterial);
+                player.position.set(0, 1, 0);
+                player.castShadow = true;
+                scene.add(player);
+
+                // 添加一些装饰物
+                for (let i = 0; i < 10; i++) {
+                    const treeGeometry = new THREE.CylinderGeometry(0, 1, 4, 6);
+                    const treeMaterial = new THREE.MeshPhongMaterial({ color: 0x228B22 });
+                    const tree = new THREE.Mesh(treeGeometry, treeMaterial);
+                    tree.position.set(
+                        Math.random() * 40 - 20,
+                        2,
+                        Math.random() * 40 - 20
+                    );
+                    tree.castShadow = true;
+                    scene.add(tree);
+                }
+
+                // 初始化控制器
+                controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.05;
+                controls.maxPolarAngle = Math.PI / 2;
+
+                // 初始化虚拟摇杆控制
+                initVirtualJoystick();
+
+                // 初始化技能系统
+                initSkillSystem();
+
+                // 开始游戏循环
+                animate();
+
+                // 隐藏加载屏幕
+                document.querySelector('.loading-screen').style.display = 'none';
+
+            } catch (error) {
+                console.error('Error initializing game:', error);
+                alert('游戏初始化失败，请刷新页面重试');
+            }
+        }
+
+        // 修改动画循环函数
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // 更新控制器
+            if (controls) {
+                controls.update();
+            }
+
+            // 更新物理
+            updatePhysics();
+
+            // 渲染场景
+            renderer.render(scene, camera);
+        }
+
+        // 添加物理更新函数
+        function updatePhysics() {
+            // 这里可以添加物理更新逻辑
+        }
+
+        // 修改虚拟摇杆初始化
+        function initVirtualJoystick() {
+            const joystick = document.querySelector('.virtual-joystick');
+            const handle = document.querySelector('.joystick-handle');
+            let isDragging = false;
+            let startX, startY;
+
+            joystick.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            });
+
+            joystick.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+
+                const deltaX = e.touches[0].clientX - startX;
+                const deltaY = e.touches[0].clientY - startY;
+                const distance = Math.min(Math.sqrt(deltaX * deltaX + deltaY * deltaY), 35);
+                const angle = Math.atan2(deltaY, deltaX);
+
+                handle.style.transform = `translate(
+                    ${distance * Math.cos(angle)}px,
+                    ${distance * Math.sin(angle)}px
+                )`;
+
+                // 移动角色
+                if (player) {
+                    const moveSpeed = 0.1;
+                    player.position.x += deltaX * moveSpeed;
+                    player.position.z += deltaY * moveSpeed;
+                    player.rotation.y = -angle;
+                }
+            });
+
+            joystick.addEventListener('touchend', () => {
+                isDragging = false;
+                handle.style.transform = 'translate(0, 0)';
+            });
+        }
+
+        // 修改技能系统初始化
+        function initSkillSystem() {
+            const skillButtons = document.querySelectorAll('.skill-btn');
+            skillButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const skillId = btn.dataset.skill;
+                    useSkill(skillId);
+                });
+            });
+        }
+
+        // 添加技能使用函数
+        function useSkill(skillId) {
+            // 创建一个简单的技能特效
+            const effectGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+            const effectMaterial = new THREE.MeshPhongMaterial({
+                color: 0xff0000,
+                emissive: 0xff0000,
+                emissiveIntensity: 1
+            });
+            const effect = new THREE.Mesh(effectGeometry, effectMaterial);
+            effect.position.copy(player.position);
+            scene.add(effect);
+
+            // 简单的动画效果
+            let scale = 1;
+            const animate = () => {
+                scale += 0.1;
+                effect.scale.set(scale, scale, scale);
+                effect.material.opacity = 1 - (scale - 1) / 5;
+
+                if (scale < 6) {
+                    requestAnimationFrame(animate);
+                } else {
+                    scene.remove(effect);
+                }
+            };
+            animate();
+        }
+
+        // 添加窗口大小调整处理
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 页面加载完成后初始化游戏
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html> 

@@ -1,0 +1,1923 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>开心消消乐</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-touch-callout: none;
+            touch-action: pan-y pinch-zoom;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            width: 100%;
+            position: fixed;
+            height: 100%;
+        }
+
+        .game-wrapper {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            padding-top: 15px;
+        }
+
+        .score-panel {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background: #fff;
+            margin: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .score-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 60px;
+        }
+
+        .score-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .score-label .material-icons {
+            font-size: 14px;
+            color: #FF6B6B;
+        }
+
+        .score-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            text-align: center;
+        }
+
+        .target-score {
+            display: none;
+        }
+
+        .time-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 60px;
+        }
+
+        .time-item .material-icons {
+            font-size: 14px;
+            color: #FF6B6B;
+            margin-bottom: 4px;
+        }
+
+        .time-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #FF6B6B;
+            text-align: center;
+        }
+
+        .game-container {
+            width: 90%;
+            max-width: 400px;
+            aspect-ratio: 1;
+            background: #fff;
+            border-radius: 12px;
+            padding: 10px;
+            margin: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 2px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .candy {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .candy:active {
+            transform: scale(0.9);
+        }
+
+        .candy.selected {
+            transform: scale(1.15);
+            z-index: 2;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.6);
+            animation: pulse 1s infinite;
+        }
+
+        .candy.matched {
+            animation: pop 0.3s ease-out;
+        }
+
+        .candy.hint {
+            animation: hintPulse 1s infinite;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(0); }
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 15px rgba(255, 107, 107, 0.6);
+                background: rgba(255, 107, 107, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 25px rgba(255, 107, 107, 0.8);
+                background: rgba(255, 107, 107, 0.3);
+            }
+            100% {
+                box-shadow: 0 0 15px rgba(255, 107, 107, 0.6);
+                background: rgba(255, 107, 107, 0.2);
+            }
+        }
+
+        @keyframes hintPulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+                background: rgba(255, 215, 0, 0.2);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 0 25px rgba(255, 215, 0, 0.8);
+                background: rgba(255, 215, 0, 0.3);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+                background: rgba(255, 215, 0, 0.2);
+            }
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px auto;
+            width: 90%;
+            max-width: 400px;
+            padding: 0 10px;
+        }
+
+        .control-btn {
+            flex: 1;
+            max-width: 120px;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(255,107,107,0.3);
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 90px;
+            height: 36px;
+            line-height: 20px;
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 添加滑动返回区域 */
+        .slide-back-area {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 20px;
+            z-index: 1000;
+        }
+
+        /* 游戏结束弹窗 */
+        .game-over-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            width: 80%;
+            max-width: 300px;
+            animation: slideUp 0.3s ease;
+        }
+
+        /* 修改成功和失败状态的样式 */
+        .level-complete, .level-failed {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .final-score, .player-score {
+            font-size: 16px;
+            margin: 10px 0;
+            color: #FF6B6B;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .modal-buttons .control-btn {
+            font-size: 14px;
+            padding: 8px 20px;
+            border-radius: 20px;
+        }
+
+        .failed-image {
+            width: 60px;
+            height: 60px;
+            margin: 5px 0;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* 修改选中效果的样式 */
+        .candy {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .candy.selected {
+            transform: scale(1.15);
+            z-index: 2;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.6);
+            animation: pulse 1s infinite;
+        }
+
+        .candy.hint {
+            animation: hintPulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 15px rgba(255, 107, 107, 0.6);
+                background: rgba(255, 107, 107, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 25px rgba(255, 107, 107, 0.8);
+                background: rgba(255, 107, 107, 0.3);
+            }
+            100% {
+                box-shadow: 0 0 15px rgba(255, 107, 107, 0.6);
+                background: rgba(255, 107, 107, 0.2);
+            }
+        }
+
+        @keyframes hintPulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+                background: rgba(255, 215, 0, 0.2);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 0 25px rgba(255, 215, 0, 0.8);
+                background: rgba(255, 215, 0, 0.3);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+                background: rgba(255, 215, 0, 0.2);
+            }
+        }
+
+        /* 添加晃动动画样式 */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* 添加暂停按钮样式 */
+        .control-btn.pause {
+            background: linear-gradient(135deg, #4ECDC4, #45B7D1);
+        }
+
+        /* 添加游戏暂停遮罩层样式 */
+        .pause-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        /* 修改暂停内容容器样式 */
+        .pause-content {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            width: 80%;
+            max-width: 280px;
+            animation: slideUp 0.3s ease;
+        }
+
+        /* 修改暂停标题样式 */
+        .pause-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        /* 修改暂停按钮容器样式 */
+        .pause-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        /* 修改暂停按钮样式 */
+        .pause-buttons .control-btn {
+            font-size: 14px;
+            padding: 8px 16px;
+            width: 100px;
+            height: 36px;
+            line-height: 20px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        /* 按钮悬停效果 */
+        .pause-buttons .control-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(255,107,107,0.3);
+        }
+
+        /* 按钮点击效果 */
+        .pause-buttons .control-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 添加标分数容器样式 */
+        .target-container {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            background: #fff;
+            margin: 10px 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .target-label {
+            font-size: 14px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .target-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #FF6B6B;
+        }
+
+        /* 关卡标签样式 */
+        .level-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .level-label .material-icons {
+            font-size: 14px;
+            color: #4ECDC4;
+        }
+
+        /* 改礼花动画样式 */
+        .confetti {
+            position: fixed; /* 改为fixed定位，从顶开始 */
+            top: -20px; /* 从屏幕顶部上方开始 */
+            width: 8px;
+            height: 8px;
+            opacity: 0;
+            animation: confetti-fall 3s ease-in-out infinite;
+            z-index: 1001; /* 确保在最上层 */
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* 修改按钮文字样式 */
+        .modal-buttons .control-btn {
+            font-size: 12px;
+            padding: 8px 15px;
+            max-width: 100px;
+            white-space: nowrap; /* 防止文字换行 */
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 修改成功弹窗样式 */
+        .level-complete {
+            font-size: 24px;
+            font-weight: bold;
+            color: #FF6B6B;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            z-index: 1002; /* 确保文字在礼花上层 */
+        }
+
+        .level-complete .emoji {
+            font-size: 40px;
+            margin: 10px 0;
+        }
+
+        /* 修改失败弹窗样式 */
+        .level-failed {
+            font-size: 24px;
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .level-failed .emoji {
+            font-size: 40px;
+            margin: 10px 0;
+        }
+
+        .failed-image {
+            width: 100px;
+            height: 100px;
+            margin: 10px 0;
+        }
+
+        /* 修改游戏结弹窗按钮样式 */
+        .modal-buttons .control-btn {
+            font-size: 12px;
+            padding: 8px 15px;
+            max-width: 100px;
+        }
+
+        /* 添加提示次数显示样式 */
+        .hint-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #FF6B6B;
+            color: white;
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 20px;
+            height: 20px;
+            line-height: 16px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* 修改提示按钮样式 */
+        .control-btn.hint {
+            position: relative;
+            padding-right: 25px;
+        }
+
+        .hint-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #FF6B6B;
+            color: white;
+            font-size: 12px;
+            min-width: 20px;
+            height: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* 禁用状态的示按钮 */
+        .control-btn.hint.disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* 添加排行榜样式 */
+        .leaderboard-preview {
+            margin: 15px 0;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .leaderboard-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .leaderboard-item .rank {
+            width: 20px;
+            text-align: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .leaderboard-item .score {
+            flex: 1;
+            color: #FF6B6B;
+            font-weight: 600;
+        }
+
+        .leaderboard-item .level {
+            margin: 0 10px;
+            color: #666;
+        }
+
+        .leaderboard-item .date {
+            color: #999;
+            font-size: 10px;
+        }
+
+        .leaderboard-item.top-1 {
+            background: linear-gradient(135deg, #FFD700, #FFC107);
+            color: white;
+        }
+
+        .leaderboard-item.top-2 {
+            background: linear-gradient(135deg, #C0C0C0, #9E9E9E);
+            color: white;
+        }
+
+        .leaderboard-item.top-3 {
+            background: linear-gradient(135deg, #CD7F32, #8D6E63);
+            color: white;
+        }
+
+        .no-records {
+            text-align: center;
+            color: #999;
+            padding: 10px;
+        }
+
+        .sweet-alert {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            text-align: center;
+            z-index: 9999;
+            width: 280px;
+            animation: sweetAlertFadeIn 0.3s ease-out;
+        }
+
+        @keyframes sweetAlertFadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .sweet-alert-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .sweet-alert-title {
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .sweet-alert-button {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .sweet-alert-button:active {
+            transform: scale(0.95);
+        }
+
+        .sweet-alert-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 9998;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            font-size: 12px;
+            gap: 10px;
+        }
+
+        .leaderboard-item .time {
+            color: #FF6B6B;
+            font-weight: 500;
+        }
+
+        .confetti {
+            animation: confetti-fall 3s ease-in-out forwards; /* 改为forwards，动画只播放一次 */
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .player-score {
+            font-size: 20px;
+            font-weight: 600;
+            color: #4ECDC4;
+            margin: 10px 0;
+        }
+
+        .score-details {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .score-details div {
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* 修改弹窗容器样式 */
+        .tips-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        /* 修改弹窗内容样式 */
+        .tips-modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            width: 80%;
+            max-width: 300px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        /* 添加弹窗动画 */
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* 弹窗标题样式 */
+        .tips-modal-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        /* 弹窗按钮样式 */
+        .tips-modal-button {
+            background: #FF6B6B;
+            color: white;
+            border: none;
+            padding: 8px 24px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-top: 16px;
+            cursor: pointer;
+        }
+
+        .tips-modal-button:active {
+            transform: scale(0.98);
+        }
+
+        /* 修改提示按钮和提示次数的样式 */
+        .control-btn.hint {
+            position: relative;
+            padding-right: 25px;
+        }
+
+        .hint-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #FF6B6B;
+            color: white;
+            font-size: 12px;
+            min-width: 20px;
+            height: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 2;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-back-area"></div>
+
+    <div class="game-wrapper">
+        <div class="score-panel">
+            <div class="score-item">
+                <div class="score-label">
+                    <i class="material-icons">stars</i>
+                    分数
+                </div>
+                <div class="score-value" id="score">0</div>
+            </div>
+            <div class="score-item">
+                <div class="level-label">
+                    <i class="material-icons">military_tech</i>
+                    关卡
+                </div>
+                <div class="score-value" id="level">1</div>
+            </div>
+            <div class="time-item">
+                <i class="material-icons">timer</i>
+                <div class="time-value" id="timer">0:34</div>
+            </div>
+        </div>
+
+        <div class="target-container">
+            <div class="target-label">
+                <i class="material-icons" style="color: #FF6B6B;">flag</i>
+                目标分数
+            </div>
+            <div class="target-value" id="targetScore">1000</div>
+        </div>
+
+        <div class="game-container">
+            <div class="game-grid" id="gameGrid"></div>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn" onclick="restartGame()">重新开始</button>
+            <button class="control-btn hint" onclick="showHint()">
+                提示
+                <span class="hint-count">3</span>
+            </button>
+            <button class="control-btn pause" onclick="togglePause()">暂停</button>
+        </div>
+
+        <div class="game-over-modal" id="gameOverModal">
+            <div class="modal-content">
+                <h2>游戏结束</h2>
+                <div class="final-score">得分: <span id="finalScore">0</span></div>
+                <div class="modal-buttons">
+                    <button class="control-btn" onclick="restartGame()">再玩一次</button>
+                    <button class="control-btn" onclick="window.location.href='quwanyouxi.html'">返回列</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="pause-overlay" id="pauseOverlay">
+            <div class="pause-content">
+                <div class="pause-title">游戏暂停</div>
+                <div class="pause-buttons">
+                    <button class="control-btn" onclick="resumeGame()">继续游戏</button>
+                    <button class="control-btn" onclick="window.location.href='quwanyouxi.html'">退出游戏</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GRID_SIZE = 8;
+        const CANDY_TYPES = ['🍎', '🍊', '🍇', '🍓', '🍪', '🍫'];
+        let score = 0;
+        let moves = 30;
+        let selectedCandy = null;
+        let grid = [];
+
+        // 添加关卡和倒计时相关变量
+        let currentLevel = 1;
+        let timeLeft = 120; // 初始120秒
+        let timer = null;
+        let targetScore = 1000; // 初始目标分数
+
+        // 修改关卡配置，调整每关的目标分数
+        const levelConfig = {
+            1: { target: 200, time: 60, gridSize: 8, minMatch: 3 },     // 1分钟, 200分
+            2: { target: 500, time: 120, gridSize: 8, minMatch: 3 },    // 2分钟, 500分
+            3: { target: 1000, time: 300, gridSize: 8, minMatch: 3 },   // 5分钟, 1000分
+            4: { target: 1300, time: 480, gridSize: 8, minMatch: 3 },   // 8分钟, 1300分
+            5: { target: 1800, time: 660, gridSize: 8, minMatch: 4 },   // 11分钟, 1800分
+            6: { target: 2500, time: 900, gridSize: 8, minMatch: 4 },   // 15分钟, 2500分
+            7: { target: 3000, time: 1200, gridSize: 8, minMatch: 4 },  // 20分钟, 3000分
+            8: { target: 4000, time: 1500, gridSize: 8, minMatch: 4 },  // 25分钟, 4000分
+            9: { target: 6000, time: 1800, gridSize: 8, minMatch: 5 },  // 30分钟, 6000分
+            10: { target: 9000, time: 1800, gridSize: 8, minMatch: 5 }  // 30分钟, 9000分
+        };
+
+        // 添加暂停状态变量
+        let isPaused = false;
+        let savedTimeLeft = 0;
+
+        // 添加提示次数限制
+        let hintCount = 3;
+
+        // 暂停/继续切换函数
+        function togglePause() {
+            if (isPaused) {
+                resumeGame();
+            } else {
+                pauseGame();
+            }
+        }
+
+        // 暂停游戏
+        function pauseGame() {
+            isPaused = true;
+            savedTimeLeft = timeLeft;
+            clearInterval(timer);
+            
+            // 显示暂停遮罩
+            document.getElementById('pauseOverlay').style.display = 'flex';
+            
+            // 禁用游戏网格点击
+            const gameGrid = document.getElementById('gameGrid');
+            gameGrid.style.pointerEvents = 'none';
+            
+            // 更改暂停按钮文本
+            document.querySelector('.control-btn.pause').textContent = '继续';
+        }
+
+        // 继续游戏
+        function resumeGame() {
+            isPaused = false;
+            timeLeft = savedTimeLeft;
+            
+            // 重新启动计时器
+            timer = setInterval(() => {
+                if (!isPaused) {
+                    timeLeft--;
+                    updateTimer();
+                    if (timeLeft <= 0) {
+                        clearInterval(timer);
+                        checkLevelComplete();
+                    }
+                }
+            }, 1000);
+            
+            // 隐藏暂停遮罩
+            document.getElementById('pauseOverlay').style.display = 'none';
+            
+            // 恢复游戏网格点击
+            const gameGrid = document.getElementById('gameGrid');
+            gameGrid.style.pointerEvents = 'auto';
+            
+            // 更改暂停按钮文本
+            document.querySelector('.control-btn.pause').textContent = '暂停';
+        }
+
+        // 初始化游戏
+        function initGame() {
+            isPaused = false;
+            
+            // 确保当前关卡有效
+            if (!levelConfig[currentLevel]) {
+                currentLevel = 1;
+            }
+            
+            const config = levelConfig[currentLevel];
+            timeLeft = config.time;
+            targetScore = config.target;
+            score = 0;
+            
+            // 更新显示
+            document.getElementById('targetScore').textContent = targetScore;
+            document.getElementById('level').textContent = currentLevel;
+            updateTimer();
+            document.getElementById('score').textContent = '0';
+            
+            // 清除之前的定时器
+            if (timer) clearInterval(timer);
+            
+            // 开始倒计时
+            timer = setInterval(() => {
+                if (!isPaused) {
+                    timeLeft--;
+                    updateTimer();
+                    if (timeLeft <= 0) {
+                        clearInterval(timer);
+                        checkLevelComplete();
+                    }
+                }
+            }, 1000);
+
+            // 初始化游戏网格
+            const gameGrid = document.getElementById('gameGrid');
+            gameGrid.innerHTML = '';
+            grid = [];
+
+            // 创建初始网格
+            const gridSize = config.gridSize || 8; // 使用配置中的网格大小
+            for (let i = 0; i < gridSize; i++) {
+                grid[i] = [];
+                for (let j = 0; j < gridSize; j++) {
+                    const candy = createCandy(i, j);
+                    gameGrid.appendChild(candy);
+                    grid[i][j] = candy;
+                }
+            }
+
+            // 确保初始状态没有匹配
+            while (checkMatches().length > 0) {
+                shuffleGrid();
+            }
+
+            // 重置暂停按钮文本
+            document.querySelector('.control-btn.pause').textContent = '暂停';
+            document.getElementById('pauseOverlay').style.display = 'none';
+
+            // 重置提示次数并更新显示
+            hintCount = 3;
+            updateHintButton();
+            
+            // 启用游戏格点击
+            gameGrid.style.pointerEvents = 'auto';
+        }
+
+        // 创建糖果元素
+        function createCandy(row, col) {
+            const candy = document.createElement('div');
+            candy.className = 'candy';
+            candy.dataset.row = row;
+            candy.dataset.col = col;
+            candy.textContent = CANDY_TYPES[Math.floor(Math.random() * CANDY_TYPES.length)];
+            
+            candy.addEventListener('click', () => handleCandyClick(candy));
+            
+            return candy;
+        }
+
+        // 添加自动提示功能
+        let lastInteractionTime = Date.now();
+        let hintTimer = null;
+
+        // 修handleCandyClick函数
+        function handleCandyClick(candy) {
+            if (isPaused) return;
+            
+            lastInteractionTime = Date.now();
+            clearTimeout(hintTimer);
+            startHintTimer();
+
+            if (!selectedCandy) {
+                // 第一次选择
+                selectedCandy = candy;
+                candy.classList.add('selected');
+            } else {
+                // 第二次选择
+                const row1 = parseInt(selectedCandy.dataset.row);
+                const col1 = parseInt(selectedCandy.dataset.col);
+                const row2 = parseInt(candy.dataset.row);
+                const col2 = parseInt(candy.dataset.col);
+
+                if (selectedCandy === candy) {
+                    // 如果点击同一个糖果，取消选择
+                    selectedCandy.classList.remove('selected');
+                    selectedCandy = null;
+                } else if (isAdjacent(row1, col1, row2, col2)) {
+                    // 如果相邻，检查交换后是否能形成三连
+                    const tempText = selectedCandy.textContent;
+                    
+                    // 临时交换以检查是否能形成匹配
+                    selectedCandy.textContent = candy.textContent;
+                    candy.textContent = tempText;
+
+                    // 检查交换后是否形成匹配
+                    const matches = checkMatches();
+                    
+                    // 先交换回来
+                    candy.textContent = selectedCandy.textContent;
+                    selectedCandy.textContent = tempText;
+
+                    if (matches.length >= 3) {
+                        // 如果可以形成三连，再次交换并执行消除
+                        selectedCandy.textContent = candy.textContent;
+                        candy.textContent = tempText;
+                        selectedCandy.classList.remove('selected');
+                        handleMatches(matches);
+                    } else {
+                        // 如果不能形成三连，添加晃动动画
+                        candy.style.animation = 'shake 0.5s';
+                        selectedCandy.style.animation = 'shake 0.5s';
+                        setTimeout(() => {
+                            candy.style.animation = '';
+                            selectedCandy.style.animation = '';
+                        }, 500);
+                        selectedCandy.classList.remove('selected');
+                    }
+                    selectedCandy = null;
+                } else {
+                    // 如果不相邻，取消之前的选择，选择新的糖果
+                    selectedCandy.classList.remove('selected');
+                    selectedCandy = candy;
+                    candy.classList.add('selected');
+                }
+            }
+        }
+
+        // 修改isAdjacent函数，使其更精确
+        function isAdjacent(row1, col1, row2, col2) {
+            const rowDiff = Math.abs(row1 - row2);
+            const colDiff = Math.abs(col1 - col2);
+            // 确保只有上下右相邻的才能交换
+            return (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1);
+        }
+
+        // 交换两个糖果
+        async function swapCandies(candy1, candy2) {
+            const tempText = candy1.textContent;
+            candy1.textContent = candy2.textContent;
+            candy2.textContent = tempText;
+
+            // 检查否形成匹配
+            const matches = checkMatches();
+            if (matches.length > 0) {
+                await handleMatches(matches);
+            } else {
+                // 如果没有匹配，交换回来
+                candy1.textContent = candy2.textContent;
+                candy2.textContent = tempText;
+            }
+        }
+
+        // 检查匹配
+        function checkMatches() {
+            const matches = new Set();
+
+            // 检查行
+            for (let i = 0; i < GRID_SIZE; i++) {
+                for (let j = 0; j < GRID_SIZE - 2; j++) {
+                    if (grid[i][j].textContent && 
+                        grid[i][j].textContent === grid[i][j+1].textContent &&
+                        grid[i][j].textContent === grid[i][j+2].textContent) {
+                        matches.add(grid[i][j]);
+                        matches.add(grid[i][j+1]);
+                        matches.add(grid[i][j+2]);
+                        
+                        // 检查是否有更多相同的糖果
+                        let k = j + 3;
+                        while (k < GRID_SIZE && grid[i][k].textContent === grid[i][j].textContent) {
+                            matches.add(grid[i][k]);
+                            k++;
+                        }
+                    }
+                }
+            }
+
+            // 检查列
+            for (let j = 0; j < GRID_SIZE; j++) {
+                for (let i = 0; i < GRID_SIZE - 2; i++) {
+                    if (grid[i][j].textContent && 
+                        grid[i][j].textContent === grid[i+1][j].textContent &&
+                        grid[i][j].textContent === grid[i+2][j].textContent) {
+                        matches.add(grid[i][j]);
+                        matches.add(grid[i+1][j]);
+                        matches.add(grid[i+2][j]);
+                        
+                        // 检查是否有更多相同的糖果
+                        let k = i + 3;
+                        while (k < GRID_SIZE && grid[k][j].textContent === grid[i][j].textContent) {
+                            matches.add(grid[k][j]);
+                            k++;
+                        }
+                    }
+                }
+            }
+
+            return Array.from(matches);
+        }
+
+        // 处匹配
+        async function handleMatches(matches) {
+            if (matches.length < 3) return;
+
+            // 添加消除动画
+            matches.forEach(candy => {
+                candy.classList.add('matched');
+            });
+
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            // 计算分数
+            let baseScore = matches.length * 10;
+            if (matches.length > 3) {
+                baseScore += (matches.length - 3) * 5;
+            }
+
+            // 更新分数并检查是否游戏结束
+            const isGameComplete = updateScore(score + baseScore);
+            if (isGameComplete) {
+                return; // 如果游戏结束，直接返回不继续处理
+            }
+
+            // 移除匹配的糖果
+            matches.forEach(candy => {
+                candy.textContent = '';
+                candy.classList.remove('matched');
+            });
+
+            // 下落糖果
+            await dropCandies();
+
+            // 填充新的糖果
+            fillNewCandies();
+
+            // 检查是否还有新的匹配
+            const newMatches = checkMatches();
+            if (newMatches.length >= 3) {
+                await handleMatches(newMatches);
+            }
+        }
+
+        // 下落糖果
+        async function dropCandies() {
+            let dropped = false;
+
+            for (let j = 0; j < GRID_SIZE; j++) {
+                for (let i = GRID_SIZE - 1; i > 0; i--) {
+                    if (grid[i][j].textContent === '') {
+                        for (let k = i - 1; k >= 0; k--) {
+                            if (grid[k][j].textContent !== '') {
+                                grid[i][j].textContent = grid[k][j].textContent;
+                                grid[k][j].textContent = '';
+                                dropped = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (dropped) {
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+
+            return dropped;
+        }
+
+        // 填充新的糖果
+        function fillNewCandies() {
+            for (let i = 0; i < GRID_SIZE; i++) {
+                for (let j = 0; j < GRID_SIZE; j++) {
+                    if (grid[i][j].textContent === '') {
+                        grid[i][j].textContent = CANDY_TYPES[Math.floor(Math.random() * CANDY_TYPES.length)];
+                    }
+                }
+            }
+        }
+
+        // 修改更新分数函数
+        function updateScore(newScore) {
+            const multiplier = Math.max(1, Math.floor(currentLevel / 2));
+            score = newScore * multiplier;
+            document.getElementById('score').textContent = score;
+            
+            // 立即检查是否达到目标分数
+            if (score >= targetScore) {
+                // 立即禁用游戏网格点击
+                const gameGrid = document.getElementById('gameGrid');
+                gameGrid.style.pointerEvents = 'none';
+                
+                // 清除计时器
+                clearInterval(timer);
+                
+                // 立即显示通关界面
+                checkLevelComplete();
+                return true; // 返回true表示游戏结束
+            }
+            return false; // 返回false表示游戏继续
+        }
+
+        // 更新步数
+        function updateMoves(newMoves) {
+            moves = newMoves;
+            document.getElementById('moves').textContent = moves;
+            if (moves === 0) {
+                gameOver();
+            }
+        }
+
+        // 游戏束
+        function gameOver() {
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('gameOverModal').style.display = 'flex';
+        }
+
+        // 重新开始游戏
+        function restartGame() {
+            document.getElementById('gameOverModal').style.display = 'none';
+            setTimeout(() => {
+                initGame();
+            }, 500); // 添加短暂延迟确保UI更新
+        }
+
+        // 提示功能
+        function showHint() {
+            if (hintCount <= 0) {
+                showSweetAlert('提示次数已用完', '🔒', event.currentTarget);
+                return;
+            }
+            
+            // 先清除之前的提示效果
+            document.querySelectorAll('.candy.hint').forEach(candy => {
+                candy.classList.remove('hint');
+            });
+            
+            // 查找可以直接消除的三个相连物品
+            let hintFound = false;
+            let hintCandies = [];
+            
+            // 检查水平方向的三个相连
+            for (let i = 0; i < GRID_SIZE && !hintFound; i++) {
+                for (let j = 0; j < GRID_SIZE - 2 && !hintFound; j++) {
+                    if (grid[i][j].textContent !== '' &&
+                        grid[i][j].textContent === grid[i][j+1].textContent &&
+                        grid[i][j].textContent === grid[i][j+2].textContent) {
+                        hintCandies = [grid[i][j], grid[i][j+1], grid[i][j+2]];
+                        hintFound = true;
+                        break;
+                    }
+                }
+            }
+            
+            // 检查垂直方向的三个相连
+            if (!hintFound) {
+                for (let j = 0; j < GRID_SIZE && !hintFound; j++) {
+                    for (let i = 0; i < GRID_SIZE - 2 && !hintFound; i++) {
+                        if (grid[i][j].textContent !== '' &&
+                            grid[i][j].textContent === grid[i+1][j].textContent &&
+                            grid[i][j].textContent === grid[i+2][j].textContent) {
+                            hintCandies = [grid[i][j], grid[i+1][j], grid[i+2][j]];
+                            hintFound = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // 如果没有找到直接相连的，检查潜在的可交换组合
+            if (!hintFound) {
+                // 检查水平方向的潜在匹配
+                for (let i = 0; i < GRID_SIZE && !hintFound; i++) {
+                    for (let j = 0; j < GRID_SIZE - 1 && !hintFound; j++) {
+                        // 尝试交换并检查
+                        const temp = grid[i][j].textContent;
+                        grid[i][j].textContent = grid[i][j+1].textContent;
+                        grid[i][j+1].textContent = temp;
+                        
+                        if (checkMatches().length >= 3) {
+                            hintCandies = [grid[i][j], grid[i][j+1]];
+                            hintFound = true;
+                        }
+                        
+                        // 交换回来
+                        grid[i][j+1].textContent = grid[i][j].textContent;
+                        grid[i][j].textContent = temp;
+                    }
+                }
+
+                // 检查垂直方向的潜在匹配
+                if (!hintFound) {
+                    for (let j = 0; j < GRID_SIZE && !hintFound; j++) {
+                        for (let i = 0; i < GRID_SIZE - 1 && !hintFound; i++) {
+                            const temp = grid[i][j].textContent;
+                            grid[i][j].textContent = grid[i+1][j].textContent;
+                            grid[i+1][j].textContent = temp;
+                            
+                            if (checkMatches().length >= 3) {
+                                hintCandies = [grid[i][j], grid[i+1][j]];
+                                hintFound = true;
+                            }
+                            
+                            // 交换回来
+                            grid[i+1][j].textContent = grid[i][j].textContent;
+                            grid[i][j].textContent = temp;
+                        }
+                    }
+                }
+            }
+
+            if (hintFound) {
+                // 减少提示次数
+                hintCount--;
+                updateHintButton();
+                
+                // 高亮显示提示的糖果
+                hintCandies.forEach(candy => {
+                    candy.classList.add('hint');
+                });
+                
+                // 3秒后移除高亮效果
+                setTimeout(() => {
+                    hintCandies.forEach(candy => {
+                        candy.classList.remove('hint');
+                    });
+                }, 3000);
+            } else {
+                // 如果确实没有可消除的组合，才显示重新排列提示
+                showSweetAlert('正在重排列游戏棋盘...', '🔄', event.currentTarget);
+                setTimeout(() => {
+                    shuffleGrid();
+                    document.querySelector('.sweet-alert-backdrop').remove();
+                    document.querySelector('.sweet-alert').remove();
+                }, 1500);
+            }
+        }
+
+        // 打乱网格
+        function shuffleGrid() {
+            const candies = [];
+            for (let i = 0; i < GRID_SIZE; i++) {
+                for (let j = 0; j < GRID_SIZE; j++) {
+                    candies.push(grid[i][j].textContent);
+                }
+            }
+
+            // 随机乱
+            for (let i = candies.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [candies[i], candies[j]] = [candies[j], candies[i]];
+            }
+
+            // 重新填充网格
+            let index = 0;
+            for (let i = 0; i < GRID_SIZE; i++) {
+                for (let j = 0; j < GRID_SIZE; j++) {
+                    grid[i][j].textContent = candies[index++];
+                }
+            }
+        }
+
+        // 修改滑动返回功能
+        let startX = 0;
+        let startY = 0;
+        const threshold = 50;
+
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (startX < 50) {
+                const deltaX = e.touches[0].clientX - startX;
+                const deltaY = Math.abs(e.touches[0].clientY - startY);
+                
+                if (deltaX > deltaY && deltaX > 0) {
+                    e.preventDefault();
+                }
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            if (startX < 50) {
+                const deltaX = e.changedTouches[0].clientX - startX;
+                const deltaY = Math.abs(e.changedTouches[0].clientY - startY);
+                
+                if (deltaX > threshold && deltaX > deltaY) {
+                    window.location.href = 'quwanyouxi.html';
+                }
+            }
+        });
+
+        // 修改checkLevelComplete函数
+        function checkLevelComplete() {
+            clearInterval(timer);
+            
+            // 禁用游戏网格点击
+            const gameGrid = document.getElementById('gameGrid');
+            gameGrid.style.pointerEvents = 'none';
+            
+            // 清除所有正在进行的动画
+            document.querySelectorAll('.candy').forEach(candy => {
+                candy.classList.remove('matched', 'selected', 'hint');
+                candy.style.animation = '';
+            });
+            
+            if (score >= targetScore) {
+                // 通关
+                showLevelComplete(true);
+            } else {
+                // 失败
+                showLevelComplete(false);
+            }
+        }
+
+        // 修改游戏结束显示函数
+        function showLevelComplete(success) {
+            const modal = document.getElementById('gameOverModal');
+            const content = modal.querySelector('.modal-content');
+            
+            if (success) {
+                const scoreResult = calculatePlayerScore(score, timeLeft, currentLevel);
+                content.innerHTML = `
+                    <div class="level-complete">
+                        <span style="font-size: 40px;">🎉</span>
+                        恭喜通关！
+                    </div>
+                    <div class="final-score">游戏得分: ${score}</div>
+                    <div class="player-score">获得积分: ${scoreResult.total}</div>
+                    <div class="modal-buttons">
+                        <button class="control-btn" onclick="nextLevel()">下一关</button>
+                        <button class="control-btn" onclick="window.location.href='quwanyouxi.html'">返回</button>
+                    </div>
+                `;
+                createConfetti();
+            } else {
+                const scoreResult = calculatePlayerScore(score, timeLeft, currentLevel);
+                content.innerHTML = `
+                    <div class="level-failed">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzNiAzNiI+PHBhdGggZmlsbD0iI0ZGQ0M0RCIgZD0iTTM2IDE4YzAgOS45NDEtOC4wNTkgMTgtMTggMTgtOS45NCAwLTE4LTguMDU5LTE4LTE4QzAgOC4wNiA4LjA2IDAgMTggMGM5Ljk0MSAwIDE4IDguMDYgMTggMTgiLz48cGF0aCBmaWxsPSIjNjY0NTAwIiBkPSJNMjkuNSAxOS43MDFjLS4xMjQtLjA2NS0uMjUzLS4xMzUtLjQxNC0uMjItLjIzNy0uMTI1LS40ODctLjI2NC0uNzY3LS40Mi0uMjEzLS4xMi0uNDM2LS4yNDctLjY3MS0uMzc3LS4xMjMtLjA2OS0uMjQ4LS4xMzctLjM3NC0uMjA2LS44NzUtLjQ4MS0xLjc3Ny0uOTU3LTIuNzA1LTEuMzg4bC0xLjAxMy0uNDY3Yy0uMjQ1LS4xMDctLjQ3LS4yMDEuNjg0LS4yODcuMjE0LS4wODUuNDI0LS4xNjEuNjE3LS4yMjUuMTkxLS4wNjQuMzY2LS4xMTguNTE2LS4xNTguMTUxLS4wNC4yNzktLjA3MS4zNzQtLjA5MS4wOTYtLjAyMS4xNS0uMDMuMTUtLjAzcy0uMDUzLjAxNS0uMTQ4LjA0MmMtLjA5NS4wMjYtLjIyMi4wNjUtLjM3Mi4xMTItLjE0OS4wNDctLjMyNC4xMDgtLjUxNC4xNzktLjE5MS4wNzEtLjM5OS4xNTQtLjYxMS4yNDctLjIxMy4wOTItLjQzNi4xOTMtLjY3OS4zMDZsLTEuMDA2LjQ4NmMtLjkxOS40NDYtMS44MTEuOTM2LTIuNjc2IDEuNDMtLjEyNC4wNzEtLjI0OC4xNDItLjM3LjIxMy0uMjMyLjEzNS0uNDUyLjI2NS0uNjYyLjM4OS0uMjc3LjE2Mi0uNTIzLjMwNi0uNzU2LjQzNS0uMTU5LjA4OC0uMjg1LjE2LS40MDYuMjI3LS4yNDIuMTMzLS4zNzkuMjA5LS4zNzkuMjA5cy4xNDEtLjA2NS4zODktLjE4NnpNMjMgMjljMCAxLjY1Ny0yLjI0MyA0LTUgNHMtNS0yLjM0My01LTQgMi4yNDMtMiA1LTIgNSAuMzQzIDUgMnoiLz48L3N2Zz4=" class="failed-image" alt="失败表情">
+                        挑战失败
+                    </div>
+                    <div class="final-score">游戏得分: ${score}</div>
+                    <div class="player-score">获得积分: ${scoreResult.total}</div>
+                    <div class="modal-buttons">
+                        <button class="control-btn" onclick="restartGame()">重玩</button>
+                        <button class="control-btn" onclick="window.location.href='quwanyouxi.html'">返回</button>
+                    </div>
+                `;
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        // 添加下一关函数
+        function nextLevel() {
+            if (currentLevel < 10) {  // 修改为10关
+                currentLevel++;
+                document.getElementById('gameOverModal').style.display = 'none';
+                setTimeout(() => {
+                    initGame();
+                }, 500);
+            } else {
+                showSweetAlert('恭喜你完成了所有关卡！', '🎉');
+                setTimeout(() => {
+                    window.location.href = 'quwanyouxi.html';
+                }, 2000);
+            }
+        }
+
+        // 添加自动提示计时器
+        function startHintTimer() {
+            if (hintTimer) {
+                clearTimeout(hintTimer);
+            }
+            
+            hintTimer = setTimeout(() => {
+                if (Date.now() - lastInteractionTime >= 5000) { // 5秒无操作
+                    showAutoHint();
+                }
+            }, 5000);
+        }
+
+        // 自动提示数
+        function showAutoHint() {
+            // 清除之前的提示
+            document.querySelectorAll('.candy.hint').forEach(candy => {
+                candy.classList.remove('hint');
+            });
+
+            // 查找可以直接消除的三个相连物品
+            let hintFound = false;
+            let hintCandies = [];
+            
+            // 检查水平方向
+            for (let i = 0; i < GRID_SIZE && !hintFound; i++) {
+                for (let j = 0; j < GRID_SIZE - 2 && !hintFound; j++) {
+                    if (grid[i][j].textContent !== '' &&
+                        grid[i][j].textContent === grid[i][j+1].textContent &&
+                        grid[i][j].textContent === grid[i][j+2].textContent) {
+                        hintCandies = [grid[i][j], grid[i][j+1], grid[i][j+2]];
+                        hintFound = true;
+                    }
+                }
+            }
+
+            // 检查垂直方向
+            if (!hintFound) {
+                for (let j = 0; j < GRID_SIZE && !hintFound; j++) {
+                    for (let i = 0; i < GRID_SIZE - 2 && !hintFound; i++) {
+                        if (grid[i][j].textContent !== '' &&
+                            grid[i][j].textContent === grid[i+1][j].textContent &&
+                            grid[i][j].textContent === grid[i+2][j].textContent) {
+                            hintCandies = [grid[i][j], grid[i+1][j], grid[i+2][j]];
+                            hintFound = true;
+                        }
+                    }
+                }
+            }
+
+            if (hintFound) {
+                // 高亮显示可以消除的三个糖果
+                hintCandies.forEach(candy => {
+                    candy.classList.add('hint');
+                });
+
+                // 3秒后移除提示
+                setTimeout(() => {
+                    hintCandies.forEach(candy => {
+                        candy.classList.remove('hint');
+                    });
+                    // 重新开始计时器
+                    startHintTimer();
+                }, 3000);
+            }
+        }
+
+        // 添加晃动动画样式
+        const shakeStyle = document.createElement('style');
+        shakeStyle.textContent = `
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }`;
+        document.head.appendChild(shakeStyle);
+
+        // 在页面加载时启动提示计时器
+        document.addEventListener('DOMContentLoaded', function() {
+            currentLevel = 1;
+            initGame();
+            startHintTimer();
+        });
+
+        // 添加页面可见性变化监听
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                clearTimeout(hintTimer);
+            } else {
+                lastInteractionTime = Date.now();
+                startHintTimer();
+            }
+        });
+
+        // 修改时间显示格式，将秒数转换为分:秒格式
+        function updateTimer() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timer').textContent = 
+                `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        }
+
+        // 添加更新提示按钮显示的函数
+        function updateHintButton() {
+            const hintBtn = document.querySelector('.control-btn.hint');
+            let hintCountElement = hintBtn.querySelector('.hint-count');
+            
+            // 如果没有提示次数元素，创建一个
+            if (!hintCountElement) {
+                hintCountElement = document.createElement('span');
+                hintCountElement.className = 'hint-count';
+                hintBtn.appendChild(hintCountElement);
+            }
+            
+            // 更新提示次数显示
+            hintCountElement.textContent = hintCount;
+            
+            // 更新按钮状态
+            if (hintCount <= 0) {
+                hintBtn.classList.add('disabled');
+            } else {
+                hintBtn.classList.remove('disabled');
+            }
+        }
+
+        // 修改创建礼花效果函数，只播放一次
+        function createConfetti() {
+            const colors = ['#FF6B6B', '#4ECDC4', '#FFD93D', '#95E1D3', '#A78BFA', '#FF9F43'];
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 1 + 's';
+                document.body.appendChild(confetti);
+                
+                // 动画结束后移除礼花
+                confetti.addEventListener('animationend', () => {
+                    confetti.remove();
+                }, { once: true }); // 确保事件监听器只触发一次
+            }
+        }
+
+        // 修改排行榜记录函数，添加用时记录
+        function updateLeaderboard(gameScore) {
+            const playerScore = calculatePlayerScore(gameScore, timeLeft, currentLevel);
+            let leaderboard = JSON.parse(localStorage.getItem('playerLeaderboard')) || [];
+            
+            // 添加新的记录
+            const newRecord = {
+                score: playerScore,
+                gameScore: gameScore,
+                time: 120 - timeLeft,
+                date: new Date().toISOString(),
+                level: currentLevel,
+                playerName: localStorage.getItem('playerName') || '玩家' + Math.floor(Math.random() * 10000),
+                avatar: localStorage.getItem('playerAvatar') || 'https://s1.imagehub.cc/images/2024/02/23/default_avatar.jpeg'
+            };
+            
+            leaderboard.push(newRecord);
+            
+            // 按积分降序和用时升序排序
+            leaderboard.sort((a, b) => {
+                if (b.score !== a.score) {
+                    return b.score - a.score;
+                }
+                return a.time - b.time;
+            });
+            
+            // 只保留前10名
+            leaderboard = leaderboard.slice(0, 10);
+            
+            // 保存排行榜
+            localStorage.setItem('playerLeaderboard', JSON.stringify(leaderboard));
+            return playerScore;
+        }
+
+        // 修改获取排行榜HTML的函数
+        function getLeaderboardHTML() {
+            const leaderboard = JSON.parse(localStorage.getItem('playerLeaderboard')) || [];
+            
+            if (leaderboard.length === 0) {
+                return '<div class="no-records">暂无排行记录</div>';
+            }
+            
+            return `
+                <div class="leaderboard-title">最佳记录</div>
+                <div class="leaderboard-list">
+                    ${leaderboard.map((record, index) => `
+                        <div class="leaderboard-item ${index < 3 ? 'top-' + (index + 1) : ''}">
+                            <div class="rank">${index + 1}</div>
+                            <div class="score">${record.score}分</div>
+                            <div class="time">用时: ${formatTime(record.time)}秒</div>
+                            <div class="level">第${record.level}关</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // 添加时间格式化函数
+        function formatTime(seconds) {
+            return seconds.toFixed(1);
+        }
+
+        // 修改弹窗函数，使其在屏幕中间显示
+        function showSweetAlert(message, icon) {
+            // 移除已存在的弹窗
+            const existingAlert = document.querySelector('.sweet-alert');
+            const existingBackdrop = document.querySelector('.sweet-alert-backdrop');
+            if (existingAlert) existingAlert.remove();
+            if (existingBackdrop) existingBackdrop.remove();
+
+            // 创建背景遮罩
+            const backdrop = document.createElement('div');
+            backdrop.className = 'sweet-alert-backdrop';
+            document.body.appendChild(backdrop);
+
+            // 创建弹窗
+            const alert = document.createElement('div');
+            alert.className = 'sweet-alert';
+            alert.innerHTML = `
+                <div class="sweet-alert-icon">${icon}</div>
+                <div class="sweet-alert-title">${message}</div>
+                <button class="sweet-alert-button" onclick="this.closest('.sweet-alert').remove(); document.querySelector('.sweet-alert-backdrop').remove();">确定</button>
+            `;
+
+            document.body.appendChild(alert);
+
+            // 3秒后自动关闭
+            setTimeout(() => {
+                alert.remove();
+                backdrop.remove();
+            }, 3000);
+        }
+
+        // 修改玩家积分计算函数
+        function calculatePlayerScore(gameScore, timeLeft, level) {
+            // 基础分数（根据关卡递增）
+            let baseScore = 10 * level; // 第一关10分起步，每关递增10分
+            
+            // 游戏分数奖励（游戏分数除以100作为奖励）
+            let gameScoreBonus = Math.floor(gameScore / 100);
+            
+            // 时间奖励（每剩余1秒增加1分）
+            const timeBonus = Math.floor(timeLeft);
+            
+            // 关卡加成（每关固定加成）
+            const levelBonus = level * 50; // 每关增加50分的固定加成
+            
+            // 完美通关奖励（如果分数超过目标分数的150%，给予额外奖励）
+            const targetScore = levelConfig[level].target;
+            const perfectBonus = gameScore > targetScore * 1.5 ? 100 : 0; // 完美通关奖励100分
+            
+            // 计算总积分
+            const totalScore = baseScore + gameScoreBonus + timeBonus + levelBonus + perfectBonus;
+            
+            // 返回积分明细，用于显示
+            return {
+                total: totalScore,
+                details: {
+                    baseScore: baseScore,
+                    gameScoreBonus: gameScoreBonus,
+                    timeBonus: timeBonus,
+                    levelBonus: levelBonus,
+                    perfectBonus: perfectBonus
+                }
+            };
+        }
+    </script>
+</body>
+</html> 

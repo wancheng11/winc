@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>选择陪玩</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f8f8f8;
+            line-height: 1.6;
+        }
+
+        /* 主容器 */
+        .container {
+            padding: 16px;
+        }
+
+        /* 陪玩列表 */
+        .player-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .player-card {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        .player-card:active {
+            transform: scale(0.98);
+        }
+
+        .player-image {
+            width: 100%;
+            padding-top: 100%;
+            position: relative;
+            background: #f5f5f5;
+        }
+
+        .player-image img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .player-info {
+            padding: 12px;
+        }
+
+        .player-name {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: #333;
+        }
+
+        .player-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin: 8px 0;
+        }
+
+        .tag {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #666;
+        }
+
+        .tag.location {
+            background: #FFF3E0;
+            color: #FF9800;
+        }
+
+        .tag.age {
+            background: #E3F2FD;
+            color: #2196F3;
+        }
+
+        .tag.height {
+            background: #E8F5E9;
+            color: #4CAF50;
+        }
+
+        .player-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        /* 手势返回区域 */
+        .gesture-back {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 20px;
+            z-index: 99;
+        }
+
+        /* 筛选栏 */
+        .filter-bar {
+            background: #fff;
+            padding: 12px 16px;
+            display: flex;
+            gap: 16px;
+            margin: 0 -16px 16px;
+            z-index: 99;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .filter-item {
+            font-size: 13px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .filter-item.active {
+            color: #FF6B6B;
+        }
+
+        /* 添加选择陪玩链式 */
+        .select-player-link {
+            color: #FF6B6B;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .select-player-link::after {
+            content: '_';
+            color: #FF6B6B;
+        }
+
+        .select-player-link:active {
+            opacity: 0.8;
+        }
+
+        /* 添加提示样式 */
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 14px;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 主容器，修改上边距 -->
+    <div class="container" style="padding-top: 0;">
+        <!-- 添加手势返回区域 -->
+        <div class="gesture-back"></div>
+        
+        <!-- 筛选栏 -->
+        <div class="filter-bar">
+            <div class="filter-item active">
+                推荐排序
+                <i class="material-icons">keyboard_arrow_down</i>
+            </div>
+            <div class="filter-item">
+                接单量
+                <i class="material-icons">keyboard_arrow_down</i>
+            </div>
+            <div class="filter-item">
+                好评率
+                <i class="material-icons">keyboard_arrow_down</i>
+            </div>
+        </div>
+
+        <!-- 陪玩列表 -->
+        <div class="player-list">
+            <!-- 海口的陪玩 -->
+            <div class="player-card" onclick="selectPlayer(this)">
+                <div class="player-image">
+                    <img src="https://s1.imagehub.cc/images/2024/11/26/260383d17e7ad6193503f67267e9be5a.webp" alt="陪玩头像">
+                </div>
+                <div class="player-info">
+                    <div class="player-name">小艾</div>
+                    <div class="player-tags">
+                        <span class="tag age">年龄 22</span>
+                        <span class="tag height">身高 168cm</span>
+                        <span class="tag location">海口</span>
+                    </div>
+                    <div class="player-stats">
+                        <span>接单 2890</span>
+                        <span>评分 4.9</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="player-card" onclick="selectPlayer(this)">
+                <div class="player-image">
+                    <img src="https://s1.imagehub.cc/images/2024/11/26/ff59880100fc22c00902a4db60822a56.webp" alt="陪玩头像">
+                </div>
+                <div class="player-info">
+                    <div class="player-name">小美</div>
+                    <div class="player-tags">
+                        <span class="tag age">年龄 23</span>
+                        <span class="tag height">身高 165cm</span>
+                        <span class="tag location">海口</span>
+                    </div>
+                    <div class="player-stats">
+                        <span>接单 1580</span>
+                        <span>评分 4.8</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="player-card" onclick="selectPlayer(this)">
+                <div class="player-image">
+                    <img src="https://s1.imagehub.cc/images/2024/11/26/7e24140472b7ab1e9be7d4b9fe82ec89.webp" alt="陪玩头像">
+                </div>
+                <div class="player-info">
+                    <div class="player-name">小雨</div>
+                    <div class="player-tags">
+                        <span class="tag age">年龄 24</span>
+                        <span class="tag height">身高 170cm</span>
+                        <span class="tag location">海口</span>
+                    </div>
+                    <div class="player-stats">
+                        <span>接单 2100</span>
+                        <span>评分 4.7</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="player-card" onclick="selectPlayer(this)">
+                <div class="player-image">
+                    <img src="https://s1.imagehub.cc/images/2024/11/26/cc91ad7859152fffed46ae67b00d2029.webp" alt="陪玩头像">
+                </div>
+                <div class="player-info">
+                    <div class="player-name">小月</div>
+                    <div class="player-tags">
+                        <span class="tag location">珠海</span>
+                        <span class="tag age">年龄 21</span>
+                        <span class="tag height">身高 167cm</span>
+                    </div>
+                    <div class="player-stats">
+                        <span>接单 1890</span>
+                        <span>评分 4.8</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="player-card" onclick="selectPlayer(this)">
+                <div class="player-image">
+                    <img src="https://s1.imagehub.cc/images/2024/11/26/a90572d9000f5bd4f0ea7055099ef58e.webp" alt="陪玩头像">
+                </div>
+                <div class="player-info">
+                    <div class="player-name">小风</div>
+                    <div class="player-tags">
+                        <span class="tag location">三亚</span>
+                        <span class="tag age">年龄 26</span>
+                        <span class="tag height">身高 180cm</span>
+                    </div>
+                    <div class="player-stats">
+                        <span>接单 1450</span>
+                        <span>评分 4.6</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 修改手势返回功能
+        let startX = 0;
+        let startY = 0;
+        const threshold = 50;
+
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (startX < 50) {
+                const deltaX = e.touches[0].clientX - startX;
+                const deltaY = Math.abs(e.touches[0].clientY - startY);
+                
+                if (deltaX > deltaY && deltaX > 0) {
+                    e.preventDefault();
+                }
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            if (startX < 50) {
+                const deltaX = e.changedTouches[0].clientX - startX;
+                const deltaY = Math.abs(e.changedTouches[0].clientY - startY);
+                
+                if (deltaX > threshold && deltaX > deltaY) {
+                    history.back();
+                }
+            }
+        });
+
+        // 选择陪玩
+        function selectPlayer(element) {
+            const playerName = element.querySelector('.player-name').textContent;
+            const playerId = Math.floor(Math.random() * 90000) + 10000;
+            
+            // 获取当前订单信息
+            const currentOrder = JSON.parse(localStorage.getItem('currentOrder'));
+            
+            // 只更新陪玩信息，保持状态为"待预约"
+            currentOrder.playerName = `${playerName}_${playerId}`;
+            
+            // 保存更新后的订单信息
+            localStorage.setItem('currentOrder', JSON.stringify(currentOrder));
+            
+            // 显示选择成功提示
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = '选择成功';
+            document.body.appendChild(toast);
+            
+            // 延迟返回上一页并刷新
+            setTimeout(() => {
+                history.back();
+                if (window.opener) {
+                    window.opener.location.reload();
+                } else {
+                    window.location.reload();
+                }
+            }, 1500);
+        }
+
+        // 在页面加载时获取订单信息并筛选陪玩
+        document.addEventListener('DOMContentLoaded', function() {
+            // 从 localStorage 获取订单信息
+            const currentOrder = JSON.parse(localStorage.getItem('currentOrder'));
+            if (currentOrder) {
+                const selectedLocation = currentOrder.destination;  // 获取预约地点
+                
+                // 根据地点筛选陪玩
+                const filteredPlayers = allPlayers.filter(player => {
+                    return player.location === selectedLocation;  // 只显示匹配目的地的陪玩
+                });
+
+                // 更新陪玩列表显示
+                const playerList = document.querySelector('.player-list');
+                
+                if (filteredPlayers.length > 0) {
+                    playerList.innerHTML = filteredPlayers.map(player => getPlayerCardHTML(player)).join('');
+                } else {
+                    playerList.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #999; grid-column: 1 / -1;">
+                            <i class="material-icons" style="font-size: 48px; margin-bottom: 12px;">sentiment_dissatisfied</i>
+                            <p>暂无符合条件的陪玩</p>
+                        </div>
+                    `;
+                }
+            }
+        });
+
+        // 修改陪玩数据库，添加更多数据
+        const allPlayers = [
+            {
+                name: '小艾',
+                gender: '女',
+                age: '22',
+                height: '168cm',
+                location: '北海',
+                image: 'https://s1.imagehub.cc/images/2024/11/26/260383d17e7ad6193503f67267e9be5a.webp',
+                orderRate: '98%',
+                reviewRate: '100%',
+                orderCount: 2890,
+                rating: 4.9
+            },
+            {
+                name: '小雪',
+                gender: '女',
+                age: '23',
+                height: '165cm',
+                location: '昆明',
+                image: 'https://s1.imagehub.cc/images/2024/11/26/ff59880100fc22c00902a4db60822a56.webp',
+                orderRate: '96%',
+                reviewRate: '98%',
+                orderCount: 1680,
+                rating: 4.8
+            },
+            {
+                name: '阳阳',
+                gender: '女',
+                age: '24',
+                height: '170cm',
+                location: '广州',
+                image: 'https://s1.imagehub.cc/images/2024/11/26/7e24140472b7ab1e9be7d4b9fe82ec89.webp',
+                orderRate: '97%',
+                reviewRate: '99%',
+                orderCount: 2100,
+                rating: 4.7
+            },
+            {
+                name: '小海',
+                gender: '男',
+                age: '25',
+                height: '182cm',
+                location: '珠海',
+                image: 'https://s1.imagehub.cc/images/2024/11/26/cc91ad7859152fffed46ae67b00d2029.webp',
+                orderRate: '95%',
+                reviewRate: '97%',
+                orderCount: 1890,
+                rating: 4.8
+            },
+            {
+                name: '晴晴',
+                gender: '女',
+                age: '21',
+                height: '167cm',
+                location: '海口',
+                image: 'https://s1.imagehub.cc/images/2024/11/26/a90572d9000f5bd4f0ea7055099ef58e.webp',
+                orderRate: '94%',
+                reviewRate: '96%',
+                orderCount: 1580,
+                rating: 4.7
+            },
+            {
+                name: '小风',
+                gender: '男',
+                age: '26',
+                height: '180cm',
+                location: '三亚',
+                image: 'https://s1.imagehub.cc/images/2024/11/26/260383d17e7ad6193503f67267e9be5a.webp',
+                orderRate: '93%',
+                reviewRate: '95%',
+                orderCount: 1450,
+                rating: 4.6
+            }
+        ];
+
+        // 修改陪玩卡片显示模板
+        function getPlayerCardHTML(player) {
+            // 生成5位随机工号
+            const workerId = Math.floor(10000 + Math.random() * 90000);
+            
+            return `
+                <div class="player-card" onclick="selectPlayer(this)">
+                    <div class="player-image">
+                        <img src="${player.image}" alt="陪玩头像">
+                    </div>
+                    <div class="player-info">
+                        <div class="player-name">
+                            ${player.name}
+                            <span style="color: #999; font-size: 12px; margin-left: 4px;">${workerId}</span>
+                        </div>
+                        <div class="player-tags">
+                            <span class="tag age">年龄 ${player.age}</span>
+                            <span class="tag height">身高 ${player.height}</span>
+                            <span class="tag location">${player.location}</span>
+                        </div>
+                        <div class="player-stats">
+                            <span>接单 ${player.orderCount}</span>
+                            <span>评分 ${player.rating}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 修改筛选陪玩函数
+        function filterPlayers(gender, location) {
+            // 筛选符合条件的陪玩
+            const filteredPlayers = allPlayers.filter(player => {
+                // 首先匹配地点
+                const locationMatch = player.location === location;
+                
+                // 如果性别选择"不限"，只需匹配地点
+                if (gender === '不限') {
+                    return locationMatch;
+                }
+                
+                // 否则同时匹配地点和性别
+                return locationMatch && player.gender === gender;
+            });
+
+            // 更新陪玩列表显示
+            const playerList = document.querySelector('.player-list');
+            
+            if (filteredPlayers.length > 0) {
+                playerList.innerHTML = filteredPlayers.map(player => getPlayerCardHTML(player)).join('');
+            } else {
+                playerList.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #999; grid-column: 1 / -1;">
+                        <i class="material-icons" style="font-size: 48px; margin-bottom: 12px;">sentiment_dissatisfied</i>
+                        <p>暂无符合条件的陪玩</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 修改筛选栏点击件
+        document.querySelectorAll('.filter-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // 移除其他项的active类
+                document.querySelectorAll('.filter-item').forEach(i => i.classList.remove('active'));
+                // 添加active类到当前点击项
+                this.classList.add('active');
+                
+                // 获取当前订单信息
+                const currentOrder = JSON.parse(localStorage.getItem('currentOrder'));
+                const selectedGender = currentOrder.gender;
+                const selectedLocation = currentOrder.destination;
+                
+                // 根据不同的筛选条件排序
+                const playerList = document.querySelector('.player-list');
+                const players = Array.from(playerList.children);
+                
+                switch(this.textContent.trim()) {
+                    case '推荐排序':
+                        // 默认排序，不做处理
+                        break;
+                    case '接单量':
+                        players.sort((a, b) => {
+                            const countA = parseInt(a.querySelector('.player-stats').textContent.match(/\d+/)[0]);
+                            const countB = parseInt(b.querySelector('.player-stats').textContent.match(/\d+/)[0]);
+                            return countB - countA;
+                        });
+                        break;
+                    case '好评率':
+                        players.sort((a, b) => {
+                            const rateA = parseFloat(a.querySelector('.tag:last-child').textContent.match(/\d+/)[0]);
+                            const rateB = parseFloat(b.querySelector('.tag:last-child').textContent.match(/\d+/)[0]);
+                            return rateB - rateA;
+                        });
+                        break;
+                }
+                
+                // 更新列表显示
+                players.forEach(player => playerList.appendChild(player));
+            });
+        });
+    </script>
+</body>
+</html> 

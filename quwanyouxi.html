@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no,email=no">
+    <title>趣玩游戏</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+            position: fixed;
+            height: 100%;
+            background: #f5f5f5;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #333;
+            line-height: 1.6;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .content {
+            max-width: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0 12px;
+            padding-bottom: 70px;
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .category-section,
+        .game-list,
+        .recommend-section,
+        .hot-section,
+        .game-section,
+        .quick-match,
+        .game-category,
+        .hot-games,
+        .game-section.casual-games,
+        .game-section.action-games {
+            width: 100%;
+            margin: 3px 0;
+            background: #fff;
+            border-radius: 12px;
+            padding: 12px;
+            box-sizing: border-box;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .game-item {
+            width: 100%;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        img {
+            width: 100%;
+            height: auto;
+            -webkit-user-drag: none;
+            user-drag: none;
+        }
+
+        @supports (padding: max(0px)) {
+            .content {
+                padding-left: max(12px, env(safe-area-inset-left));
+                padding-right: max(12px, env(safe-area-inset-right));
+                padding-bottom: max(70px, env(safe-area-inset-bottom));
+            }
+        }
+
+        @media screen and (max-width: 320px) {
+            .category-section,
+            .game-list,
+            .recommend-section,
+            .hot-section,
+            .game-section,
+            .quick-match,
+            .game-category,
+            .hot-games {
+                width: 100%;
+                padding: 10px;
+            }
+        }
+
+        @media screen and (min-width: 321px) and (max-width: 375px) {
+            .category-section,
+            .game-list,
+            .recommend-section,
+            .hot-section,
+            .game-section,
+            .quick-match,
+            .game-category,
+            .hot-games {
+                width: 100%;
+                padding: 10px;
+            }
+        }
+
+        * {
+            touch-action: pan-y pinch-zoom;
+        }
+
+        .game-cover {
+            width: 100%;
+            position: relative;
+            aspect-ratio: 16/9;
+        }
+
+        .game-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .game-info {
+            padding: 8px;
+            flex: 1;
+        }
+
+        .game-name {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: #333;
+        }
+
+        .game-desc {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .game-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .play-count {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .play-count .material-icons {
+            font-size: 14px;
+        }
+
+        .section-title {
+            padding: 10px 15px 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .section-title i {
+            font-size: 18px;
+        }
+
+        .section-title span {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .game-tag {
+            position: absolute;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            color: white;
+            background: rgba(255, 107, 107, 0.9);
+            top: 8px;
+            right: 8px;
+        }
+
+        /* 添加排行榜样式 */
+        .leaderboard-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .leaderboard-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #f8f8f8;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+
+        .leaderboard-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .rank {
+            width: 24px;
+            height: 24px;
+            background: #FFD700;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 12px;
+            font-size: 14px;
+        }
+
+        /* 排名样式 */
+        .leaderboard-item:nth-child(1) .rank {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+        }
+
+        .leaderboard-item:nth-child(2) .rank {
+            background: linear-gradient(135deg, #C0C0C0, #A9A9A9);
+        }
+
+        .leaderboard-item:nth-child(3) .rank {
+            background: linear-gradient(135deg, #CD7F32, #B8860B);
+        }
+
+        /* 玩家信息样式 */
+        .player-info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .player-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .player-details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .player-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .player-score {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: #FF6B6B;
+        }
+
+        .player-score .material-icons {
+            font-size: 14px;
+            color: #FFD700;
+        }
+
+        /* 成就标签样式 */
+        .achievement {
+            font-size: 12px;
+            padding: 2px 8px;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+            color: white;
+            border-radius: 12px;
+            white-space: nowrap;
+        }
+
+        /* 前三名特殊样式 */
+        .leaderboard-item:nth-child(1) {
+            background: linear-gradient(to right, rgba(255, 215, 0, 0.1), transparent);
+        }
+
+        .leaderboard-item:nth-child(2) {
+            background: linear-gradient(to right, rgba(192, 192, 192, 0.1), transparent);
+        }
+
+        .leaderboard-item:nth-child(3) {
+            background: linear-gradient(to right, rgba(205, 127, 50, 0.1), transparent);
+        }
+
+        /* 修改下拉菜单样式 */
+        .dropdown-menu {
+            width: 160px;
+            position: absolute;
+            top: 100%; /* 改为相对于触发按钮的位置 */
+            left: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 8px;
+            display: none;
+            z-index: 1000;
+        }
+
+        /* 修改下拉触发器样式 */
+        .dropdown-trigger {
+            position: relative; /* 添加相对定位 */
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-back-area"></div>
+
+    <div class="content">
+        <!-- 修改排行榜标题 -->
+        <div class="section-title">
+            <i class="material-icons" style="color: #FFD700;">emoji_events</i>
+            <span>玩家排行榜</span>
+        </div>
+        <!-- 修改排行榜容器 -->
+        <div class="leaderboard-section">
+            <div class="leaderboard-grid">
+                <div class="leaderboard-item">
+                    <div class="rank">1</div>
+                    <div class="player-info">
+                        <img class="player-avatar" src="https://s1.imagehub.cc/images/2024/02/23/default_avatar.jpeg" alt="玩家头像">
+                        <div class="player-details">
+                            <div class="player-name">快乐玩家123</div>
+                            <div class="player-score">
+                                <i class="material-icons">stars</i>
+                                <span>8888分</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="achievement">消除达人</div>
+                </div>
+                <!-- 添加更多玩家排行项目 -->
+            </div>
+        </div>
+
+        <!-- 热门推荐标题 -->
+        <div class="section-title">
+            <i class="material-icons" style="color: #FF6B6B;">whatshot</i>
+            <span>热门推荐</span>
+        </div>
+        <!-- 热门推荐容器 -->
+        <div class="game-section hot-games">
+            <div class="game-grid">
+                <!-- 游戏项目 -->
+                <div class="game-item">
+                    <div class="game-cover">
+                        <img src="https://s1.imagehub.cc/images/2024/11/23/965f92c6765b45946133748f1ec547ab.png" alt="游戏封面">
+                        <div class="game-tag">休闲</div>
+                    </div>
+                    <div class="game-info">
+                        <div class="game-name">开心消消乐</div>
+                        <div class="game-desc">轻松休闲的消除游戏</div>
+                        <div class="game-stats">
+                            <div class="play-count">
+                                <i class="material-icons">people</i>
+                                <span>6.5万</span>
+                            </div>
+                            <span>4.8</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 添加找不同 -->
+                <div class="game-item">
+                    <div class="game-cover">
+                        <img src="https://s1.imagehub.cc/images/2024/11/23/965f92c6765b45946133748f1ec547ab.png" alt="游戏封面">
+                        <div class="game-tag">益智</div>
+                    </div>
+                    <div class="game-info">
+                        <div class="game-name">趣味找不同</div>
+                        <div class="game-desc">考验眼力的益智游戏</div>
+                        <div class="game-stats">
+                            <div class="play-count">
+                                <i class="material-icons">people</i>
+                                <span>4.8万</span>
+                            </div>
+                            <span>4.7</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 添加成语接龙 -->
+                <div class="game-item">
+                    <div class="game-cover">
+                        <img src="https://s1.imagehub.cc/images/2024/11/23/965f92c6765b45946133748f1ec547ab.png" alt="游戏封面">
+                        <div class="game-tag">文字</div>
+                    </div>
+                    <div class="game-info">
+                        <div class="game-name">成语接龙</div>
+                        <div class="game-desc">经典中国风文字游戏</div>
+                        <div class="game-stats">
+                            <div class="play-count">
+                                <i class="material-icons">people</i>
+                                <span>3.9万</span>
+                            </div>
+                            <span>4.6</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 神话传说 -->
+                <div class="game-item">
+                    <div class="game-cover">
+                        <img src="https://s1.imagehub.cc/images/2024/11/23/965f92c6765b45946133748f1ec547ab.png" alt="游戏封面">
+                        <div class="game-tag">仙侠</div>
+                    </div>
+                    <div class="game-info">
+                        <div class="game-name">神话传说</div>
+                        <div class="game-desc">古风仙侠冒险游戏</div>
+                        <div class="game-stats">
+                            <div class="play-count">
+                                <i class="material-icons">people</i>
+                                <span>5.8万</span>
+                            </div>
+                            <span>4.9</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 天下荣耀 -->
+                <div class="game-item">
+                    <div class="game-cover">
+                        <img src="https://s1.imagehub.cc/images/2024/11/23/965f92c6765b45946133748f1ec547ab.png" alt="游戏封面">
+                        <div class="game-tag">MOBA</div>
+                    </div>
+                    <div class="game-info">
+                        <div class="game-name">天下荣耀</div>
+                        <div class="game-desc">3D魔幻MOBA竞技</div>
+                        <div class="game-stats">
+                            <div class="play-count">
+                                <i class="material-icons">people</i>
+                                <span>8.8万</span>
+                            </div>
+                            <span>4.9</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 休闲游戏标题 -->
+        <div class="section-title">
+            <i class="material-icons" style="color: #4ECDC4;">sports_esports</i>
+            <span>休闲游戏</span>
+        </div>
+        <!-- 休闲游戏容器 -->
+        <div class="game-section">
+            <div class="game-grid">
+                <!-- 添加你画我猜 -->
+                <div class="game-item">
+                    <div class="game-cover">
+                        <img src="https://s1.imagehub.cc/images/2024/11/23/965f92c6765b45946133748f1ec547ab.png" alt="游戏封面">
+                        <div class="game-tag">社交</div>
+                    </div>
+                    <div class="game-info">
+                        <div class="game-name">你画我猜</div>
+                        <div class="game-desc">趣味多人绘画游戏</div>
+                        <div class="game-stats">
+                            <div class="play-count">
+                                <i class="material-icons">people</i>
+                                <span>3.2万</span>
+                            </div>
+                            <span>4.5</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 添加骗子酒馆 -->
+                <div class="game-item">
+                    <div class="game-cover">
+                        <img src="https://s1.imagehub.cc/images/2024/11/23/965f92c6765b45946133748f1ec547ab.png" alt="游戏封面">
+                        <div class="game-tag">策略</div>
+                    </div>
+                    <div class="game-info">
+                        <div class="game-name">骗子酒馆</div>
+                        <div class="game-desc">欢乐的桌游派对</div>
+                        <div class="game-stats">
+                            <div class="play-count">
+                                <i class="material-icons">people</i>
+                                <span>2.8万</span>
+                            </div>
+                            <span>4.4</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 添加大话骰子 -->
+                <div class="game-item">
+                    <div class="game-cover">
+                        <img src="https://s1.imagehub.cc/images/2024/11/23/965f92c6765b45946133748f1ec547ab.png" alt="游戏封面">
+                        <div class="game-tag">休闲</div>
+                    </div>
+                    <div class="game-info">
+                        <div class="game-name">大话骰子</div>
+                        <div class="game-desc">经典骰子游戏</div>
+                        <div class="game-stats">
+                            <div class="play-count">
+                                <i class="material-icons">people</i>
+                                <span>2.5万</span>
+                            </div>
+                            <span>4.3</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 保留原有的欢乐斗地主 -->
+                <div class="game-item">
+                    <div class="game-cover">
+                        <img src="https://s1.imagehub.cc/images/2024/11/23/965f92c6765b45946133748f1ec547ab.png" alt="游戏封面">
+                        <div class="game-tag">休闲</div>
+                    </div>
+                    <div class="game-info">
+                        <div class="game-name">欢乐斗地主</div>
+                        <div class="game-desc">经典棋牌游戏</div>
+                        <div class="game-stats">
+                            <div class="play-count">
+                                <i class="material-icons">people</i>
+                                <span>5万+</span>
+                            </div>
+                            <span>4.8分</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 动作游戏标题 - 移到容器外 -->
+        <div class="section-title">
+            <i class="material-icons" style="color: #A78BFA;">sports_kabaddi</i>
+            <span>动作游戏</span>
+        </div>
+        <!-- 动作游戏容器 -->
+        <div class="game-section">
+            <div class="game-grid">
+                <div class="game-item">
+                    <div class="game-cover">
+                        <img src="https://s1.imagehub.cc/images/2024/11/23/965f92c6765b45946133748f1ec547ab.png" alt="游戏封面">
+                        <div class="game-tag">动作</div>
+                    </div>
+                    <div class="game-info">
+                        <div class="game-name">街机格斗</div>
+                        <div class="game-desc">经典街机格斗游戏</div>
+                        <div class="game-stats">
+                            <div class="play-count">
+                                <i class="material-icons">people</i>
+                                <span>3万+</span>
+                            </div>
+                            <span>4.7分</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- 更多动作游戏... -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 添加滑动返回功能
+        let startX = 0;
+        let startY = 0;
+        const threshold = 50;
+
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (startX < 50) {
+                const deltaX = e.touches[0].clientX - startX;
+                const deltaY = Math.abs(e.touches[0].clientY - startY);
+                
+                if (deltaX > deltaY && deltaX > 0) {
+                    e.preventDefault();
+                }
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            if (startX < 50) {
+                const deltaX = e.changedTouches[0].clientX - startX;
+                const deltaY = Math.abs(e.changedTouches[0].clientY - startY);
+                
+                if (deltaX > threshold && deltaX > deltaY) {
+                    window.location.href = 'quwanxingqiu.html';
+                }
+            }
+        });
+
+        // 添加游戏点击事件
+        document.querySelectorAll('.game-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const gameName = item.querySelector('.game-name').textContent;
+                switch(gameName) {
+                    case '开心消消乐':
+                        window.location.href = 'kaixinxiaoxiaole.html';
+                        break;
+                    case '神话传说':
+                        window.location.href = 'shenhuachuanshuo.html';
+                        break;
+                    case '天下荣耀':  // 添加天下荣耀的跳转
+                        window.location.href = 'tianxiarongyao.html';
+                        break;
+                    case '趣味找不同':
+                        window.location.href = 'zhaobutong.html';
+                        break;
+                    case '成语接龙':
+                        window.location.href = 'chengyujielong.html';
+                        break;
+                    case '你画我猜':
+                        window.location.href = 'nihuawocan.html';
+                        break;
+                    default:
+                        alert(`即将开始游戏：${gameName}`);
+                        break;
+                }
+            });
+        });
+
+        // 修改toggleDropdown函数
+        function toggleDropdown(event) {
+            event.stopPropagation();
+            const dropdownMenu = document.getElementById('dropdownMenu');
+            const trigger = event.currentTarget;
+            const arrowIcon = document.getElementById('arrowIcon');
+            
+            if (dropdownMenu.classList.contains('show')) {
+                dropdownMenu.classList.remove('show');
+                arrowIcon.classList.remove('active');
+            } else {
+                // 获取触发按钮的位置
+                const rect = trigger.getBoundingClientRect();
+                
+                // 设置下拉菜单的位置
+                dropdownMenu.style.top = `${rect.bottom + 5}px`; // 在按钮下方5px
+                dropdownMenu.style.left = `${rect.left}px`;
+                
+                dropdownMenu.classList.add('show');
+                arrowIcon.classList.add('active');
+                
+                // 检查是否超出屏幕右侧
+                const menuRect = dropdownMenu.getBoundingClientRect();
+                if (menuRect.right > window.innerWidth) {
+                    dropdownMenu.style.left = `${window.innerWidth - menuRect.width - 10}px`;
+                }
+            }
+        }
+    </script>
+</body>
+</html> 

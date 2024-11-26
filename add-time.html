@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>加时服务</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            line-height: 1.6;
+        }
+
+        .container {
+            padding: 16px;
+        }
+
+        .order-info {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .info-label {
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .duration-selector {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .duration-title {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .duration-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .duration-option {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .duration-option.active {
+            border-color: #FF6B6B;
+            color: #FF6B6B;
+            background: rgba(255, 107, 107, 0.05);
+        }
+
+        .price-info {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .confirm-btn {
+            width: 100%;
+            padding: 16px;
+            background: #FF6B6B;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .confirm-btn:active {
+            opacity: 0.9;
+        }
+
+        .gesture-back {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 20px;
+            z-index: 99;
+        }
+    </style>
+</head>
+<body>
+    <div class="gesture-back"></div>
+
+    <div class="container">
+        <!-- 订单信息 -->
+        <div class="order-info">
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="material-icons" style="color: #FF6B6B; font-size: 16px;">receipt</i>
+                    订单号
+                </span>
+                <span class="info-value" id="orderId">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="material-icons" style="color: #FF6B6B; font-size: 16px;">event</i>
+                    预约日期
+                </span>
+                <span class="info-value" id="bookingDate">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="material-icons" style="color: #FF6B6B; font-size: 16px;">access_time</i>
+                    服务时间
+                </span>
+                <span class="info-value" id="serviceTime">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="material-icons" style="color: #FF6B6B; font-size: 16px;">schedule</i>
+                    服务时长
+                </span>
+                <span class="info-value" id="duration">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="material-icons" style="color: #FF6B6B; font-size: 16px;">person</i>
+                    陪玩昵称
+                </span>
+                <span class="info-value" id="peiwanName">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="material-icons" style="color: #FF6B6B; font-size: 16px;">badge</i>
+                    陪玩工号
+                </span>
+                <span class="info-value" id="peiwanId">--</span>
+            </div>
+        </div>
+
+        <!-- 加时选择 -->
+        <div class="duration-selector">
+            <div class="duration-title">选择时长</div>
+            <div class="duration-options" id="durationOptions"></div>
+        </div>
+
+        <!-- 用信息 -->
+        <div class="price-info">
+            <div class="info-item">
+                <span class="info-label">原订单费用</span>
+                <span class="info-value" id="originalPrice">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">加时费用</span>
+                <span class="info-value" style="color: #FF6B6B;" id="additionalPrice">--</span>
+            </div>
+            <div class="info-item" style="border-top: 1px solid #eee; padding-top: 12px; margin-top: 12px;">
+                <span class="info-label">总计费用</span>
+                <span class="info-value" style="color: #FF6B6B; font-size: 16px;" id="totalPrice">--</span>
+            </div>
+        </div>
+
+        <!-- 确认按钮 -->
+        <button class="confirm-btn" onclick="confirmAddTime()">确认加时</button>
+    </div>
+
+    <script>
+        // 添加手势返回功能
+        let startX = 0;
+        let startY = 0;
+        const threshold = 50;
+
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (startX < 50) {
+                const deltaX = e.touches[0].clientX - startX;
+                const deltaY = Math.abs(e.touches[0].clientY - startY);
+                
+                if (deltaX > deltaY && deltaX > 0) {
+                    e.preventDefault();
+                }
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            if (startX < 50) {
+                const deltaX = e.changedTouches[0].clientX - startX;
+                const deltaY = Math.abs(e.changedTouches[0].clientY - startY);
+                
+                if (deltaX > threshold && deltaX > deltaY) {
+                    history.back();
+                }
+            }
+        });
+
+        // 页面加载时获取订单信息
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentOrder = JSON.parse(localStorage.getItem('currentOrder'));
+            if (currentOrder) {
+                // 显示订单信息
+                document.getElementById('orderId').textContent = currentOrder.orderId;
+                document.getElementById('bookingDate').textContent = currentOrder.date;
+                document.getElementById('serviceTime').textContent = currentOrder.serviceTime;
+                document.getElementById('duration').textContent = currentOrder.duration;
+                document.getElementById('peiwanName').textContent = currentOrder.playerName;
+                document.getElementById('peiwanId').textContent = currentOrder.playerId;
+                document.getElementById('originalPrice').textContent = currentOrder.price;
+
+                // 生成加时选项
+                generateDurationOptions(currentOrder);
+            }
+        });
+
+        // 生成加时选项
+        function generateDurationOptions(order) {
+            const durationOptions = document.getElementById('durationOptions');
+            const isHourly = !order.service.includes('游') || order.service === '同城游';
+            const options = isHourly ? [1, 2, 3, 4] : [1, 2, 3, 4]; // 小时或天数
+            const unit = isHourly ? '小时' : '天';
+
+            durationOptions.innerHTML = options.map(duration => `
+                <div class="duration-option" onclick="selectDuration(this, ${duration}, '${unit}')">
+                    ${duration}${unit}
+                </div>
+            `).join('');
+        }
+
+        // 选择加时时长
+        function selectDuration(element, duration, unit) {
+            // 移除其他选项的active类
+            document.querySelectorAll('.duration-option').forEach(option => {
+                option.classList.remove('active');
+            });
+            // 添加active类到当前选项
+            element.classList.add('active');
+            
+            // 计算费用
+            calculatePrice(duration, unit);
+        }
+
+        // 计算费用
+        function calculatePrice(duration, unit) {
+            const currentOrder = JSON.parse(localStorage.getItem('currentOrder'));
+            const basePrice = getBasePrice(currentOrder.service);
+            const additionalPrice = basePrice * duration;
+            const originalPrice = parseInt(currentOrder.price.replace('¥', ''));
+            const totalPrice = originalPrice + additionalPrice;
+
+            document.getElementById('additionalPrice').textContent = `¥${additionalPrice}`;
+            document.getElementById('totalPrice').textContent = `¥${totalPrice}`;
+        }
+
+        // 获取基础价格
+        function getBasePrice(service) {
+            const prices = {
+                '酒吧狂欢': 298,
+                '欢唱派对': 268,
+                '逛街电影': 198,
+                '商务应酬': 298,
+                '剧本杀': 128,
+                '密室逃脱': 128,
+                '桌球助教': 128,
+                '同城游': 268,
+                '市游': 998,
+                '跨省游': 1288,
+                '国际游': 1588
+            };
+            return prices[service] || 128;
+        }
+
+        // 修改确认加时函数
+        function confirmAddTime() {
+            const selectedDuration = document.querySelector('.duration-option.active');
+            if (!selectedDuration) {
+                alert('请选择加时时长');
+                return;
+            }
+
+            const currentOrder = JSON.parse(localStorage.getItem('currentOrder'));
+            const additionalPrice = document.getElementById('additionalPrice').textContent;
+            const totalPrice = document.getElementById('totalPrice').textContent;
+
+            // 更新原订单的加时信息
+            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+            const orderIndex = orders.findIndex(o => o.orderId === currentOrder.orderId);
+            
+            if (orderIndex !== -1) {
+                // 获取原时长和新增时长
+                const originalDuration = orders[orderIndex].duration;  // 保存原始时长字符串
+                const additionalDuration = selectedDuration.textContent;  // 保存新增时长字符串
+                const unit = selectedDuration.textContent.includes('小时') ? '小时' : '天';
+                
+                // 计算总时长（需要先转换为数字计算）
+                const originalNum = parseInt(originalDuration);
+                const additionalNum = parseInt(additionalDuration);
+                const totalDuration = `${originalNum + additionalNum}${unit}`;
+                
+                // 更新原订单信息，保持原订单号不变
+                orders[orderIndex] = {
+                    ...orders[orderIndex],
+                    orderId: currentOrder.orderId,  // 保持原订单号不变
+                    duration: totalDuration,        // 更新总时长
+                    price: totalPrice,              // 更新总价格
+                    addTimeInfo: {
+                        originalDuration: originalDuration,         // 原时长
+                        additionalDuration: additionalDuration,     // 加时时长
+                        totalDuration: totalDuration,              // 总时长
+                        additionalPrice: additionalPrice,          // 加时费用
+                        addTimeDate: new Date().toISOString()      // 加时操作时间
+                    }
+                };
+                
+                // 保存更新后的订单信息
+                localStorage.setItem('orders', JSON.stringify(orders));
+                
+                // 保存当前订单信息用于支付，使用原订单信息
+                localStorage.setItem('currentOrder', JSON.stringify(orders[orderIndex]));
+                
+                // 跳转到支付页面
+                window.location.href = 'payment.html?type=addTime';
+            }
+        }
+    </script>
+</body>
+</html> 

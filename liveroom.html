@@ -1,0 +1,2007 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>直播间</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #000;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 直播视频区域 */
+        .live-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            background: #000;
+        }
+
+        .live-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 顶部信息栏 */
+        .top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
+            z-index: 100;
+        }
+
+        .anchor-info {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+
+        .anchor-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            margin-right: 10px;
+            border: 2px solid #fff;
+        }
+
+        .anchor-details {
+            flex: 1;
+        }
+
+        .anchor-name {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .viewers-count {
+            font-size: 12px;
+            opacity: 0.8;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .viewers-count i {
+            font-size: 14px;
+        }
+
+        .follow-btn {
+            position: absolute;
+            bottom: -4px;
+            right: -4px;
+            width: 18px;
+            height: 18px;
+            border-radius: 9px;
+            background: #FF6B6B;
+            border: 1.5px solid #fff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .follow-btn .material-icons {
+            font-size: 12px;
+        }
+
+        .follow-btn.followed {
+            background: #52c41a;
+        }
+
+        .follow-btn.followed .material-icons {
+            font-size: 14px;
+        }
+
+        /* 底部互动区域 */
+        .bottom-area {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
+        }
+
+        /* 评论列表 */
+        .comments-container {
+            position: absolute;
+            bottom: 70px;
+            left: 0;
+            right: 0;
+            max-height: 50vh;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            scroll-behavior: smooth;
+        }
+
+        .comment-item {
+            background: rgba(0,0,0,0.3);
+            padding: 8px 12px;
+            border-radius: 20px;
+            max-width: 80%;
+            backdrop-filter: blur(5px);
+            word-break: break-all;
+        }
+
+        .comment-user {
+            color: #fff;
+            font-weight: 500;
+            margin-right: 5px;
+        }
+
+        .comment-user.other {
+            color: #4D94FF;
+        }
+
+        .comment-text {
+            color: #fff;
+            font-size: 14px;
+        }
+
+        /* 底部输入栏 */
+        .input-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(5px);
+            border-radius: 25px;
+        }
+
+        .comment-input {
+            flex: 1;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .comment-input::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+        }
+
+        .action-btn .material-icons {
+            font-size: 24px;
+        }
+
+        /* 礼物面板 */
+        .gift-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.9);
+            padding: 20px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .gift-panel.show {
+            transform: translateY(0);
+        }
+
+        .gift-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .gift-panel-header h3 {
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .gift-panel-close {
+            background: none;
+            border: none;
+            color: white;
+            padding: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+
+        .gift-panel-close:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .gift-panel-close .material-icons {
+            font-size: 20px;
+        }
+
+        .gift-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .gift-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .gift-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gift-name {
+            font-size: 12px;
+            color: #fff;
+        }
+
+        .gift-price {
+            font-size: 12px;
+            color: #FFD700;
+        }
+
+        /* 礼物动画 */
+        .gift-animation {
+            position: absolute;
+            left: 20px;
+            bottom: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .gift-message {
+            background: rgba(255, 215, 0, 0.2);  /* 金色背景 */
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            padding: 10px 15px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: giftSlide 2s ease forwards;
+        }
+
+        @keyframes giftSlide {
+            0% {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            10% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            90% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+        }
+
+        /* 点赞动画 */
+        .like-animation {
+            position: absolute;
+            bottom: 70px;
+            right: 20px;
+            pointer-events: none;
+        }
+
+        .like-icon {
+            position: absolute;
+            color: #FF6B6B;
+            animation: likeFloat 2s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes likeFloat {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) scale(0);
+                opacity: 0;
+            }
+        }
+
+        /* 直播统计信息 */
+        .live-stats {
+            background: rgba(0,0,0,0.3);
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 10px;
+        }
+
+        .stats-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stats-item .material-icons {
+            font-size: 16px;
+            color: #FFD700;
+        }
+
+        /* 弹幕样式 */
+        .danmaku-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 200px;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .danmaku {
+            position: absolute;
+            white-space: nowrap;
+            font-size: 14px;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            animation: danmakuMove 8s linear;
+            pointer-events: none;
+        }
+
+        @keyframes danmakuMove {
+            from { transform: translateX(100%); }
+            to { transform: translateX(-100%); }
+        }
+
+        /* 主播等级样式 */
+        .anchor-level {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(45deg, #FF4D4D, #FF8080);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        .anchor-badges {
+            display: flex;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .badge {
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* PK功能样式 */
+        .pk-container {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            transform: translateY(-50%);
+            display: none;
+            padding: 20px;
+        }
+
+        .pk-container.active {
+            display: block;
+        }
+
+        .pk-bar {
+            height: 40px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 20px;
+            display: flex;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .pk-progress {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .pk-left { background: #FF4D4D; }
+        .pk-right { background: #4D94FF; }
+
+        .pk-info {
+            display: flex;
+            justify-content: space-between;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        /* 礼物特效样式 */
+        .gift-effect {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: giftEffect 3s ease-out forwards;
+            pointer-events: none;
+        }
+
+        @keyframes giftEffect {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+        }
+
+        /* 互动按钮样式 */
+        .interaction-buttons {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .interaction-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            border: none;
+        }
+
+        .share-options {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .share-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .share-content {
+            position: relative;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            animation: slideUp 0.3s ease;
+        }
+
+        .share-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .share-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .share-item i {
+            font-size: 32px;
+            color: #666;
+        }
+
+        .share-item span {
+            font-size: 12px;
+            color: #333;
+        }
+
+        .share-cancel {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            background: #f5f5f5;
+            border-radius: 10px;
+            font-size: 15px;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        /* 添加/修改评论区样式 */
+        .comments-container {
+            position: absolute;
+            bottom: 70px;
+            left: 0;
+            right: 0;
+            max-height: 50vh;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            scroll-behavior: smooth;
+        }
+
+        .comment-item {
+            background: rgba(0,0,0,0.3);
+            padding: 8px 12px;
+            border-radius: 20px;
+            max-width: 80%;
+            backdrop-filter: blur(5px);
+            word-break: break-all;
+        }
+
+        /* 礼物消息特殊样式 */
+        .gift-message {
+            background: rgba(255, 215, 0, 0.2);  /* 金色背景 */
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        /* 保持评论区滚动平滑 */
+        .comments-container {
+            scroll-behavior: smooth;
+        }
+
+        /* 确保评论容器内容可以正常滚动 */
+        .comments-container::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .comments-container::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+        }
+
+        .comments-container::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+        }
+
+        /* 修改头像容器样式 */
+        .avatar-container {
+            position: relative;
+            margin-right: 10px;
+        }
+
+        /* 修改关注按钮样式 */
+        .follow-btn {
+            position: absolute;
+            bottom: -6px;
+            right: -6px;
+            width: 24px;
+            height: 24px;
+            border-radius: 12px;
+            background: #FF6B6B;
+            border: 2px solid #fff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .follow-btn .material-icons {
+            font-size: 16px;
+        }
+
+        .follow-btn.followed {
+            background: #52c41a;
+        }
+
+        .follow-btn.followed .material-icons {
+            font-size: 14px;
+        }
+
+        /* 修改礼物面板样式 */
+        .gift-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 15px;
+        }
+
+        .gift-tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            color: #999;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .gift-tab.active {
+            color: #fff;
+        }
+
+        .gift-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 20%;
+            right: 20%;
+            height: 2px;
+            background: #FF6B6B;
+        }
+
+        .gift-content {
+            display: none;
+        }
+
+        .gift-content.active {
+            display: block;
+        }
+
+        /* 修改礼物特效样式 */
+        @keyframes normalGift {
+            0% { transform: scale(0); opacity: 0; }
+            20% { transform: scale(1.2); opacity: 1; }
+            40% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        @keyframes specialGift {
+            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+            20% { transform: scale(1.2) rotate(0deg); opacity: 1; }
+            40% { transform: scale(1) rotate(0deg); opacity: 1; }
+            60% { transform: scale(1.1) rotate(10deg); opacity: 1; }
+            80% { transform: scale(1) rotate(-10deg); opacity: 1; }
+            100% { transform: scale(0) rotate(180deg); opacity: 0; }
+        }
+
+        @keyframes luxuryGift {
+            0% { transform: translate(-50%, 100%) scale(0); opacity: 0; }
+            20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            40% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            60% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+            80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -200%) scale(0); opacity: 0; }
+        }
+
+        .gift-effect {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            z-index: 1000;
+        }
+
+        .gift-effect.normal {
+            animation: normalGift 2s ease-out forwards;
+        }
+
+        .gift-effect.special {
+            animation: specialGift 3s ease-out forwards;
+        }
+
+        .gift-effect.luxury {
+            animation: luxuryGift 4s ease-out forwards;
+        }
+
+        /* 添加礼物轨道动画 */
+        .gift-track {
+            position: fixed;
+            left: 0;
+            right: 0;
+            height: 60px;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        .gift-track-1 { top: 20%; }
+        .gift-track-2 { top: 40%; }
+        .gift-track-3 { top: 60%; }
+
+        @keyframes trackMove {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100vw); }
+        }
+
+        /* 添加用户币数和��值按钮样式 */
+        .user-coins {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #FFD700;
+            font-size: 14px;
+            margin-right: auto;
+            margin-left: 15px;
+        }
+
+        .user-coins .material-icons {
+            font-size: 18px;
+        }
+
+        .recharge-btn {
+            background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
+            border: none;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            margin-left: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .recharge-btn:active {
+            transform: scale(0.95);
+        }
+
+        .recharge-btn .material-icons {
+            font-size: 14px;
+        }
+
+        /* 充值弹窗样式 */
+        .recharge-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .recharge-content {
+            background: white;
+            width: 90%;
+            max-width: 360px;
+            border-radius: 20px;
+            padding: 20px;
+            animation: slideUp 0.3s ease;
+        }
+
+        .recharge-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .recharge-header h3 {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .recharge-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .recharge-item {
+            background: #f8f8f8;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            position: relative;
+            border: 1px solid #eee;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .recharge-item:active {
+            transform: scale(0.98);
+        }
+
+        .recharge-item.selected {
+            border-color: #FF6B6B;
+            background: #FFF0F0;
+        }
+
+        .amount {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .price {
+            font-size: 14px;
+            color: #FF6B6B;
+        }
+
+        .bonus {
+            font-size: 12px;
+            color: #FF9800;
+            margin-top: 4px;
+        }
+
+        .tag {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #FF6B6B;
+            color: white;
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 8px;
+        }
+
+        .payment-methods {
+            margin-bottom: 20px;
+        }
+
+        .payment-method {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            background: #f8f8f8;
+            cursor: pointer;
+        }
+
+        .payment-method img {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+        }
+
+        .payment-method span {
+            flex: 1;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .payment-method i {
+            color: #ddd;
+        }
+
+        .payment-method.active {
+            background: #FFF0F0;
+        }
+
+        .payment-method.active i {
+            color: #FF6B6B;
+        }
+
+        .confirm-recharge {
+            width: 100%;
+            background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .confirm-recharge:active {
+            transform: scale(0.98);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="live-container">
+        <!-- 直播视频 -->
+        <video class="live-video" autoplay muted loop>
+            <source src="path_to_your_video.mp4" type="video/mp4">
+        </video>
+
+        <!-- 顶部信息栏 -->
+        <div class="top-bar">
+            <div class="anchor-info">
+                <div class="avatar-container">
+                    <img class="anchor-avatar" src="" alt="主播头像">
+                    <button class="follow-btn" onclick="toggleFollow(event)">
+                        <i class="material-icons">add</i>
+                    </button>
+                </div>
+                <div class="anchor-details">
+                    <div class="anchor-name"></div>
+                    <div class="viewers-count">
+                        <i class="material-icons">visibility</i>
+                        <span></span>
+                    </div>
+                </div>
+                <div class="live-stats">
+                    <div class="stats-item">
+                        <i class="material-icons">favorite</i>
+                        <span>0w</span>
+                    </div>
+                    <div class="stats-item">
+                        <i class="material-icons">card_giftcard</i>
+                        <span>0w</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 评论区 -->
+        <div class="comments-container" id="commentsContainer"></div>
+
+        <!-- 弹幕容器 -->
+        <div class="danmaku-container" id="danmakuContainer"></div>
+
+        <!-- PK容器 -->
+        <div class="pk-container" id="pkContainer">
+            <div class="pk-bar">
+                <div class="pk-progress pk-left" style="width: 50%"></div>
+                <div class="pk-progress pk-right" style="width: 50%"></div>
+            </div>
+            <div class="pk-info">
+                <span>0</span>
+                <span>05:00</span>
+                <span>0</span>
+            </div>
+        </div>
+
+        <!-- 底部操作区 -->
+        <div class="bottom-area">
+            <div class="input-bar">
+                <input type="text" id="commentInput" class="comment-input" placeholder="说点什么...">
+                <div class="action-buttons">
+                    <button class="action-btn" onclick="toggleGiftPanel()">
+                        <i class="material-icons">card_giftcard</i>
+                        <span>礼物</span>
+                    </button>
+                    <button class="action-btn" onclick="addLike()">
+                        <i class="material-icons">favorite</i>
+                        <span>点赞</span>
+                    </button>
+                    <button class="action-btn" onclick="shareStream()">
+                        <i class="material-icons">share</i>
+                        <span>分享</span>
+                    </button>
+                    <button class="action-btn" onclick="togglePK()">
+                        <i class="material-icons">sports_kabaddi</i>
+                        <span>PK</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 礼物面板 -->
+        <div class="gift-panel" id="giftPanel">
+            <div class="gift-panel-header">
+                <h3>选择礼物</h3>
+                <div class="user-coins">
+                    <i class="material-icons">monetization_on</i>
+                    <span id="userCoins">888</span>币
+                </div>
+                <button class="gift-panel-close" onclick="toggleGiftPanel()">
+                    <i class="material-icons">close</i>
+                </button>
+            </div>
+            <div class="gift-grid">
+                <div class="gift-item" onclick="sendGift('爱心', 1, 'normal')">
+                    <div class="gift-icon">❤️</div>
+                    <div class="gift-name">爱心</div>
+                    <div class="gift-price">1币</div>
+                </div>
+                <div class="gift-item" onclick="sendGift('玫瑰', 5, 'normal')">
+                    <div class="gift-icon">🌹</div>
+                    <div class="gift-name">玫瑰</div>
+                    <div class="gift-price">5币</div>
+                </div>
+                <div class="gift-item" onclick="sendGift('皇冠', 20, 'special')">
+                    <div class="gift-icon">👑</div>
+                    <div class="gift-name">皇冠</div>
+                    <div class="gift-price">20币</div>
+                </div>
+                <div class="gift-item" onclick="sendGift('火箭', 100, 'luxury')">
+                    <div class="gift-icon">🚀</div>
+                    <div class="gift-name">火箭</div>
+                    <div class="gift-price">100币</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 礼物动画容器 -->
+        <div class="gift-animation" id="giftAnimation"></div>
+
+        <!-- 点赞动画容器 -->
+        <div class="like-animation" id="likeAnimation"></div>
+    </div>
+
+    <!-- 添加充值弹窗 -->
+    <div class="recharge-modal" id="rechargeModal">
+        <div class="recharge-content">
+            <div class="recharge-header">
+                <h3>充值中心</h3>
+                <button class="close-btn" onclick="closeRechargeModal()">
+                    <i class="material-icons">close</i>
+                </button>
+            </div>
+            <div class="recharge-options">
+                <div class="recharge-item" onclick="selectRechargeAmount(60)">
+                    <div class="amount">60币</div>
+                    <div class="price">￥6</div>
+                </div>
+                <div class="recharge-item" onclick="selectRechargeAmount(300)">
+                    <div class="amount">300币</div>
+                    <div class="price">￥30</div>
+                    <div class="bonus">送30币</div>
+                </div>
+                <div class="recharge-item recommended" onclick="selectRechargeAmount(980)">
+                    <div class="amount">980币</div>
+                    <div class="price">￥98</div>
+                    <div class="bonus">送150币</div>
+                    <div class="tag">推荐</div>
+                </div>
+                <div class="recharge-item" onclick="selectRechargeAmount(1980)">
+                    <div class="amount">1980币</div>
+                    <div class="price">￥198</div>
+                    <div class="bonus">送400币</div>
+                </div>
+            </div>
+            <div class="payment-methods">
+                <div class="payment-method active">
+                    <img src="path_to_wechat_icon.png" alt="微信支付">
+                    <span>微信支付</span>
+                    <i class="material-icons">check_circle</i>
+                </div>
+                <div class="payment-method">
+                    <img src="path_to_alipay_icon.png" alt="支付宝">
+                    <span>支付宝</span>
+                    <i class="material-icons">check_circle</i>
+                </div>
+            </div>
+            <button class="confirm-recharge" onclick="confirmRecharge()">确认充值</button>
+        </div>
+    </div>
+
+    <script>
+        // 模拟评论数据
+        const mockComments = [
+            { user: "甜心宝贝", text: "主播好可爱~" },
+            { user: "星星之火", text: "这歌太好听了" },
+            { user: "清风徐来", text: "主播唱得真好" },
+            { user: "夜空中最亮的星", text: "给主播打call" }
+        ];
+
+        // 初始化评论区
+        function initComments() {
+            const container = document.getElementById('commentsContainer');
+            mockComments.forEach(comment => {
+                addComment(comment.user, comment.text);
+            });
+        }
+
+        // 添加评论
+        function addComment(user, text) {
+            const container = document.getElementById('commentsContainer');
+            const commentEl = document.createElement('div');
+            commentEl.className = 'comment-item';
+            
+            // 判断是否是其他用户
+            const isOtherUser = user !== getUserName();
+            
+            commentEl.innerHTML = `
+                <span class="comment-user ${isOtherUser ? 'other' : ''}">${user}</span>
+                <span class="comment-text">${text}</span>
+            `;
+            container.appendChild(commentEl);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 处理评论输入
+        document.getElementById('commentInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const text = this.value.trim();
+                if (text) {
+                    addComment('我', text);
+                    addDanmaku(text);
+                    this.value = '';
+                }
+            }
+        });
+
+        // 礼物面板控制
+        function toggleGiftPanel() {
+            const panel = document.getElementById('giftPanel');
+            panel.classList.toggle('show');
+        }
+
+        // 修改礼物连送相关代码
+        let giftCounts = {};
+        let giftTimers = {};
+        let specialNumbers = [9, 19, 29, 39, 66, 88, 99, 520, 1314];
+
+        function sendGift(giftName, price, type = 'normal') {
+            const currentCoins = parseInt(document.getElementById('userCoins').textContent);
+            
+            if (currentCoins < price) {
+                alert('余额不足，请先充值');
+                showRechargeModal();
+                return;
+            }
+            
+            // 扣除金币
+            document.getElementById('userCoins').textContent = currentCoins - price;
+            
+            // 更新礼物连送次数
+            giftCounts[giftName] = (giftCounts[giftName] || 0) + 1;
+            
+            // 清除之前的定时器
+            if (giftTimers[giftName]) {
+                clearTimeout(giftTimers[giftName]);
+            }
+            
+            // 设置新的定时器
+            giftTimers[giftName] = setTimeout(() => {
+                delete giftCounts[giftName];
+                delete giftTimers[giftName];
+            }, 5000);
+            
+            // 检查是否达到特殊数字
+            const count = giftCounts[giftName];
+            const isSpecialNumber = specialNumbers.includes(count);
+            
+            // 创建礼物特效
+            const effect = document.createElement('div');
+            effect.className = `gift-effect ${type}`;
+            
+            // 根据不同类型和是否是特殊数字设置不同的特效
+            let giftContent = '';
+            if (isSpecialNumber) {
+                // 特殊数字的样式
+                giftContent = `
+                    <div style="font-size: ${type === 'luxury' ? 120 : 100}px;">${getGiftEmoji(giftName)}</div>
+                    <div style="font-size: 40px; 
+                               background: linear-gradient(45deg, #FFD700, #FFA500);
+                               -webkit-background-clip: text;
+                               background-clip: text;
+                               color: transparent;
+                               text-shadow: 0 2px 12px rgba(255,215,0,0.5);
+                               animation: pulse 0.5s ease infinite alternate;">
+                        ${giftName} × ${count}
+                    </div>
+                    <div style="font-size: 24px; color: #FFD700; margin-top: 10px;">
+                        ${getUserName()} 送出惊喜连击！
+                    </div>
+                `;
+            } else {
+                // 普通数字的样式
+                switch(type) {
+                    case 'normal':
+                        giftContent = `
+                            <div style="font-size: 60px;">${getGiftEmoji(giftName)}</div>
+                            <div style="font-size: 24px; color: #fff;">
+                                ${giftName} × ${count}
+                            </div>
+                        `;
+                        break;
+                    case 'special':
+                        giftContent = `
+                            <div style="font-size: 80px;">${getGiftEmoji(giftName)}</div>
+                            <div style="font-size: 28px; color: #FFD700;">
+                                ${giftName} × ${count}
+                            </div>
+                        `;
+                        break;
+                    case 'luxury':
+                        giftContent = `
+                            <div style="font-size: 100px;">${getGiftEmoji(giftName)}</div>
+                            <div style="font-size: 32px; color: #FFD700;">
+                                ${giftName} × ${count}
+                            </div>
+                        `;
+                        break;
+                }
+            }
+            
+            effect.innerHTML = giftContent;
+            document.body.appendChild(effect);
+            
+            // 创建礼物消息
+            const giftMessage = document.createElement('div');
+            giftMessage.className = 'gift-message';
+            giftMessage.innerHTML = `
+                <span style="color: ${isSpecialNumber ? '#FFD700' : '#fff'}">${getUserName()}</span>
+                送出了
+                <span style="color: ${isSpecialNumber ? '#FF69B4' : '#FFD700'}">${giftName} × ${count}</span>
+            `;
+            
+            // 将礼物消息添加到顶部显示区域
+            const container = document.querySelector('.gift-animation');
+            container.appendChild(giftMessage);
+            
+            // 设置特殊数字的动画效果
+            if (isSpecialNumber) {
+                effect.style.animation = 'specialGiftEffect 1.5s ease-out forwards';
+                giftMessage.style.animation = 'specialGiftMessage 2s ease-out forwards';
+                
+                // 播放特殊音效
+                playSpecialGiftSound();
+                
+                // 添加额外的视觉效果
+                createSpecialEffect(count);
+            }
+            
+            // 更新统计和其他功能
+            updateGiftStats(price);
+            if (isPKActive) {
+                updatePKProgress(price);
+            }
+            
+            // 移除特效元素
+            const duration = isSpecialNumber ? 3000 : 2000;
+            setTimeout(() => {
+                effect.remove();
+                giftMessage.remove();
+            }, duration);
+        }
+
+        // 添加特殊数字效果
+        function createSpecialEffect(count) {
+            const container = document.querySelector('.live-container');
+            const effect = document.createElement('div');
+            effect.className = 'special-number-effect';
+            effect.innerHTML = `
+                <div class="number-animation" style="
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    font-size: 120px;
+                    font-weight: bold;
+                    background: linear-gradient(45deg, #FFD700, #FFA500);
+                    -webkit-background-clip: text;
+                    background-clip: text;
+                    color: transparent;
+                    text-shadow: 0 0 20px rgba(255,215,0,0.5);
+                    animation: numberPulse 1s ease infinite alternate;
+                ">
+                    ${count}
+                </div>
+            `;
+            container.appendChild(effect);
+            
+            setTimeout(() => effect.remove(), 2000);
+        }
+
+        // 添加特殊数字动画样式
+        const specialStyles = `
+        @keyframes numberPulse {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            100% { transform: translate(-50%, -50%) scale(1.2); }
+        }
+
+        @keyframes specialGiftEffect {
+            0% { transform: scale(0); opacity: 0; }
+            20% { transform: scale(1.2); opacity: 1; }
+            40% { transform: scale(1); opacity: 1; }
+            60% { transform: scale(1.1); opacity: 1; }
+            80% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        @keyframes specialGiftMessage {
+            0% { transform: translateX(-100%); opacity: 0; }
+            20% { transform: translateX(0); opacity: 1; }
+            80% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(-100%); opacity: 0; }
+        }
+        `;
+
+        // 将特殊样式添加到页面
+        const styleSheet = document.createElement('style');
+        styleSheet.textContent = specialStyles;
+        document.head.appendChild(styleSheet);
+
+        // 播放特殊礼物音效
+        function playSpecialGiftSound() {
+            const audio = new Audio('path_to_special_sound.mp3');
+            audio.play().catch(e => console.log('播放音效失败:', e));
+        }
+
+        // 获取礼物对应的emoji
+        function getGiftEmoji(giftName) {
+            const giftEmojis = {
+                '爱心': '❤️',
+                '玫瑰': '🌹',
+                '皇冠': '👑',
+                '火箭': '🚀'
+            };
+            return giftEmojis[giftName] || '🎁';
+        }
+
+        // 播放礼物音效
+        function playGiftSound(type) {
+            const audio = new Audio();
+            switch(type) {
+                case 'normal':
+                    audio.src = 'path_to_normal_gift_sound.mp3';
+                    break;
+                case 'special':
+                    audio.src = 'path_to_special_gift_sound.mp3';
+                    break;
+                case 'luxury':
+                    audio.src = 'path_to_luxury_gift_sound.mp3';
+                    break;
+            }
+            audio.play().catch(e => console.log('播放音效失败:', e));
+        }
+
+        // 更新礼物统计
+        function updateGiftStats(price) {
+            const statsElement = document.querySelector('.stats-item:nth-child(2) span');
+            const currentValue = parseFloat(statsElement.textContent.replace('w', ''));
+            const newValue = (currentValue + price/10000).toFixed(1);
+            statsElement.textContent = newValue + 'w';
+        }
+
+        // 点赞动画
+        function addLike() {
+            const container = document.getElementById('likeAnimation');
+            
+            // 创建多个心形图标
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const like = document.createElement('div');
+                    like.className = 'like-icon';
+                    like.innerHTML = '❤️';
+                    like.style.fontSize = '24px';
+                    like.style.left = Math.random() * 40 + 'px';
+                    
+                    // 添加随机动画效果
+                    like.style.animation = `likeFloat ${1.5 + Math.random()}s ease-out forwards`;
+                    like.style.transform = `rotate(${Math.random() * 30 - 15}deg)`;
+                    
+                    container.appendChild(like);
+
+                    // 动画结束后移除元素
+                    setTimeout(() => like.remove(), 2000);
+                }, i * 200);
+            }
+
+            // 更新点赞数
+            updateLikeStats();
+        }
+
+        // 更新点赞统计
+        function updateLikeStats() {
+            const statsElement = document.querySelector('.stats-item:nth-child(1) span');
+            const currentValue = parseFloat(statsElement.textContent.replace('w', ''));
+            const newValue = (currentValue + 0.1).toFixed(1);
+            statsElement.textContent = newValue + 'w';
+        }
+
+        // 分享直播
+        function shareStream() {
+            const shareOptions = document.createElement('div');
+            shareOptions.className = 'share-options';
+            shareOptions.innerHTML = `
+                <div class="share-overlay"></div>
+                <div class="share-content">
+                    <h3>分享直播</h3>
+                    <div class="share-grid">
+                        <div class="share-item" onclick="shareToWeChat()">
+                            <i class="material-icons">wechat</i>
+                            <span>微信</span>
+                        </div>
+                        <div class="share-item" onclick="shareToMoments()">
+                            <i class="material-icons">timeline</i>
+                            <span>朋友圈</span>
+                        </div>
+                        <div class="share-item" onclick="shareToQQ()">
+                            <i class="material-icons">chat</i>
+                            <span>QQ</span>
+                        </div>
+                        <div class="share-item" onclick="shareToWeibo()">
+                            <i class="material-icons">web</i>
+                            <span>微博</span>
+                        </div>
+                    </div>
+                    <button class="share-cancel" onclick="closeShare()">取消</button>
+                </div>
+            `;
+            document.body.appendChild(shareOptions);
+        }
+
+        // 关闭直播间
+        function closeLiveRoom() {
+            window.location.href = 'yulezhibo.html';
+        }
+
+        // 弹幕系统
+        function addDanmaku(text, color = '#fff') {
+            const container = document.getElementById('danmakuContainer');
+            const danmaku = document.createElement('div');
+            danmaku.className = 'danmaku';
+            danmaku.textContent = text;
+            danmaku.style.color = color;
+            danmaku.style.top = Math.random() * (container.offsetHeight - 30) + 'px';
+            container.appendChild(danmaku);
+
+            // 动画结束后移除弹幕
+            danmaku.addEventListener('animationend', () => {
+                danmaku.remove();
+            });
+        }
+
+        // PK功能
+        let isPKActive = false;
+        let pkTimer = null;
+        let pkScores = { left: 0, right: 0 };
+
+        function togglePK() {
+            if (isPKActive) {
+                // 关闭PK
+                clearInterval(pkTimer);
+                document.getElementById('pkContainer').classList.remove('active');
+                isPKActive = false;
+                pkScores = { left: 0, right: 0 };
+            } else {
+                // 开启PK
+                isPKActive = true;
+                pkScores = { left: 0, right: 0 };
+                const pkContainer = document.getElementById('pkContainer');
+                pkContainer.classList.add('active');
+                
+                // 重置进度条和分数
+                document.querySelector('.pk-progress.pk-left').style.width = '50%';
+                document.querySelector('.pk-progress.pk-right').style.width = '50%';
+                
+                // 更新PK信息显示
+                const pkInfo = pkContainer.querySelector('.pk-info');
+                pkInfo.innerHTML = `
+                    <span>0</span>
+                    <span>05:00</span>
+                    <span>0</span>
+                `;
+                
+                // 开始倒计时
+                let time = 300; // 5分钟
+                pkTimer = setInterval(() => {
+                    time--;
+                    const minutes = Math.floor(time / 60);
+                    const seconds = time % 60;
+                    pkInfo.querySelector('span:nth-child(2)').textContent = 
+                        `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    
+                    if (time <= 0) {
+                        clearInterval(pkTimer);
+                        determinePKWinner();
+                    }
+                }, 1000);
+            }
+        }
+
+        // 美颜开关
+        let isBeautyOn = false;
+        function toggleBeauty() {
+            isBeautyOn = !isBeautyOn;
+            // 这里可以添加实际的美颜效果
+            alert(isBeautyOn ? '美颜已开启' : '美颜已关闭');
+        }
+
+        // 弹幕开关
+        let isDanmakuOn = true;
+        function toggleDanmaku() {
+            isDanmakuOn = !isDanmakuOn;
+            const container = document.getElementById('danmakuContainer');
+            container.style.display = isDanmakuOn ? 'block' : 'none';
+            alert(isDanmakuOn ? '弹幕已开启' : '弹幕已关闭');
+        }
+
+        // 页面加载时初始化所有功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化评论区
+            initComments();
+
+            // 添加评论输入事件监听
+            const commentInput = document.getElementById('commentInput');
+            if (commentInput) {
+                commentInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        const text = this.value.trim();
+                        if (text) {
+                            addComment(getUserName(), text);
+                            if (isDanmakuOn) {
+                                addDanmaku(text);
+                            }
+                            this.value = '';
+                        }
+                    }
+                });
+            }
+
+            // 添加礼物面板按钮事件
+            const giftBtn = document.querySelector('.action-btn:nth-child(1)');
+            if (giftBtn) {
+                giftBtn.addEventListener('click', toggleGiftPanel);
+            }
+
+            // 添加点赞按钮事件
+            const likeBtn = document.querySelector('.action-btn:nth-child(2)');
+            if (likeBtn) {
+                likeBtn.addEventListener('click', addLike);
+            }
+
+            // 添加分享按钮事件
+            const shareBtn = document.querySelector('.action-btn:nth-child(3)');
+            if (shareBtn) {
+                shareBtn.addEventListener('click', shareStream);
+            }
+
+            // 添加PK按钮事件
+            const pkBtn = document.querySelector('.action-btn:nth-child(4)');
+            if (pkBtn) {
+                pkBtn.addEventListener('click', togglePK);
+            }
+
+            // 添加礼物面板关闭按钮事件
+            const giftPanelCloseBtn = document.querySelector('.gift-panel-close');
+            if (giftPanelCloseBtn) {
+                giftPanelCloseBtn.addEventListener('click', toggleGiftPanel);
+            }
+
+            // 添加礼物项点击事件
+            document.querySelectorAll('.gift-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const giftName = this.querySelector('.gift-name').textContent;
+                    const price = parseInt(this.querySelector('.gift-price').textContent);
+                    sendGift(giftName, price, 'normal');
+                });
+            });
+
+            // 添加充值按钮事件
+            const rechargeBtn = document.querySelector('.recharge-btn');
+            if (rechargeBtn) {
+                rechargeBtn.addEventListener('click', showRechargeModal);
+            }
+
+            // 添加充值弹窗关闭按钮事件
+            const rechargeCloseBtn = document.querySelector('.recharge-modal .close-btn');
+            if (rechargeCloseBtn) {
+                rechargeCloseBtn.addEventListener('click', closeRechargeModal);
+            }
+
+            // 添加充值选项点击事件
+            document.querySelectorAll('.recharge-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const amount = parseInt(this.querySelector('.amount').textContent);
+                    selectRechargeAmount(amount);
+                });
+            });
+
+            // 添加支付方式选择事件
+            document.querySelectorAll('.payment-method').forEach(method => {
+                method.addEventListener('click', function() {
+                    const paymentType = this.querySelector('img').alt === '微信支付' ? 'wechat' : 'alipay';
+                    selectPaymentMethod(paymentType);
+                });
+            });
+
+            // 添加确认充值按钮事件
+            const confirmRechargeBtn = document.querySelector('.confirm-recharge');
+            if (confirmRechargeBtn) {
+                confirmRechargeBtn.addEventListener('click', confirmRecharge);
+            }
+
+            // 添加关注按钮事件
+            const followBtn = document.querySelector('.follow-btn');
+            if (followBtn) {
+                followBtn.addEventListener('click', function(event) {
+                    toggleFollow(event);
+                });
+            }
+
+            // 获取并更新主播信息
+            const anchorInfo = JSON.parse(localStorage.getItem('currentAnchor'));
+            if (anchorInfo) {
+                document.querySelector('.anchor-name').textContent = anchorInfo.name;
+                document.querySelector('.anchor-avatar').src = anchorInfo.avatar;
+                document.querySelector('.viewers-count span').textContent = anchorInfo.viewers;
+                document.querySelector('.stats-item:nth-child(1) span').textContent = anchorInfo.likes;
+                document.querySelector('.stats-item:nth-child(2) span').textContent = anchorInfo.gifts;
+            }
+
+            // 获取用户金币数
+            const userCoins = localStorage.getItem('userCoins') || 888;
+            document.getElementById('userCoins').textContent = userCoins;
+
+            // 添加滑动返回功能
+            let startX = 0;
+            let startY = 0;
+            const threshold = 50;
+
+            document.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            });
+
+            document.addEventListener('touchmove', (e) => {
+                if (startX < 50) {
+                    const deltaX = e.touches[0].clientX - startX;
+                    const deltaY = Math.abs(e.touches[0].clientY - startY);
+                    
+                    if (deltaX > deltaY && deltaX > 0) {
+                        e.preventDefault();
+                    }
+                }
+            }, { passive: false });
+
+            document.addEventListener('touchend', (e) => {
+                if (startX < 50) {
+                    const deltaX = e.changedTouches[0].clientX - startX;
+                    const deltaY = Math.abs(e.changedTouches[0].clientY - startY);
+                    
+                    if (deltaX > threshold && deltaX > deltaY) {
+                        window.location.href = 'yulezhibo.html';
+                    }
+                }
+            });
+
+            // 模拟实时评论和弹幕
+            setInterval(() => {
+                const randomComment = mockComments[Math.floor(Math.random() * mockComments.length)];
+                addComment(randomComment.user, randomComment.text);
+                if (isDanmakuOn) {
+                    addDanmaku(randomComment.text);
+                }
+            }, 3000);
+        });
+
+        // 移除所有的 onclick 属性，改用事件监听
+        document.querySelectorAll('[onclick]').forEach(element => {
+            const onclickValue = element.getAttribute('onclick');
+            element.removeAttribute('onclick');
+            if (onclickValue.includes('(')) {
+                const functionName = onclickValue.split('(')[0];
+                element.addEventListener('click', window[functionName]);
+            }
+        });
+
+        // 分享到不同平台的函数
+        function shareToWeChat() {
+            alert('正在调起微信...');
+            closeShare();
+        }
+
+        function shareToMoments() {
+            alert('正在调起朋友圈...');
+            closeShare();
+        }
+
+        function shareToQQ() {
+            alert('正在调起QQ...');
+            closeShare();
+        }
+
+        function shareToWeibo() {
+            alert('正在调起微博...');
+            closeShare();
+        }
+
+        function closeShare() {
+            const shareOptions = document.querySelector('.share-options');
+            if (shareOptions) {
+                shareOptions.remove();
+            }
+        }
+
+        // 修改PK进度更新函数
+        function updatePKProgress(price) {
+            if (!isPKActive) return;
+            
+            pkScores.left += price;
+            const totalScore = pkScores.left + pkScores.right;
+            
+            // 计算百分比
+            const leftPercentage = totalScore === 0 ? 50 : (pkScores.left / totalScore) * 100;
+            const rightPercentage = totalScore === 0 ? 50 : (pkScores.right / totalScore) * 100;
+            
+            // 更新进度条
+            const leftProgress = document.querySelector('.pk-progress.pk-left');
+            const rightProgress = document.querySelector('.pk-progress.pk-right');
+            
+            leftProgress.style.width = `${leftPercentage}%`;
+            rightProgress.style.width = `${rightPercentage}%`;
+            
+            // 更新PK分数显示
+            const pkInfo = document.querySelector('.pk-info');
+            pkInfo.innerHTML = `
+                <span>${Math.floor(pkScores.left)}</span>
+                <span>05:00</span>
+                <span>${Math.floor(pkScores.right)}</span>
+            `;
+        }
+
+        // 判定PK胜负
+        function determinePKWinner() {
+            const result = pkScores.left > pkScores.right ? 'win' : 
+                          pkScores.left < pkScores.right ? 'lose' : 'draw';
+            
+            const container = document.querySelector('.live-container');
+            const resultEl = document.createElement('div');
+            resultEl.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0,0,0,0.8);
+                color: white;
+                padding: 20px 40px;
+                border-radius: 12px;
+                font-size: 24px;
+                animation: fadeIn 0.5s ease;
+            `;
+            
+            let resultText = '';
+            switch(result) {
+                case 'win':
+                    resultText = '🎉 PK胜利！';
+                    break;
+                case 'lose':
+                    resultText = '😢 PK失败';
+                    break;
+                case 'draw':
+                    resultText = '🤝 平局';
+                    break;
+            }
+            
+            resultEl.textContent = `${resultText}\n最终比分：${Math.floor(pkScores.left)} VS ${Math.floor(pkScores.right)}`;
+            container.appendChild(resultEl);
+            
+            // 3秒后移除结果显示并重置PK
+            setTimeout(() => {
+                resultEl.remove();
+                isPKActive = false;
+                document.getElementById('pkContainer').classList.remove('active');
+                pkScores = { left: 0, right: 0 };
+            }, 3000);
+        }
+
+        // 获取用户名函数
+        function getUserName() {
+            // 从localStorage获取用户名，如果没有则返回默认值
+            return localStorage.getItem('userName') || '用户';
+        }
+
+        function toggleFollow(event) {
+            event.stopPropagation(); // 阻止事件冒泡
+            const btn = event.currentTarget;
+            const isFollowed = btn.classList.contains('followed');
+            
+            if (isFollowed) {
+                btn.classList.remove('followed');
+                btn.innerHTML = '<i class="material-icons">add</i>';
+                // 显示取消关注提示
+                showTip('已取消关注');
+            } else {
+                btn.classList.add('followed');
+                btn.innerHTML = '<i class="material-icons">done</i>';
+                // 显示关注成功提示
+                showTip('关注成功');
+            }
+        }
+
+        function showTip(text) {
+            const tip = document.createElement('div');
+            tip.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0,0,0,0.7);
+                color: white;
+                padding: 10px 20px;
+                border-radius: 20px;
+                font-size: 14px;
+                z-index: 1000;
+                animation: fadeInOut 1.5s ease forwards;
+            `;
+            tip.textContent = text;
+            document.body.appendChild(tip);
+
+            setTimeout(() => tip.remove(), 1500);
+        }
+
+        // 添加动画样式
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInOut {
+                0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+                20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 添加礼物消息动画样式
+        const giftMessageStyle = `
+        @keyframes giftSlide {
+            0% {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            10% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            80% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+        }`;
+
+        // 将样式添加到页面
+        const styleSheet = document.createElement('style');
+        styleSheet.textContent = giftMessageStyle;
+        document.head.appendChild(styleSheet);
+
+        // 添加轨道动画函数
+        function createTrackAnimation(giftName, type) {
+            const track = document.createElement('div');
+            track.className = `gift-track gift-track-${Math.floor(Math.random() * 3) + 1}`;
+            
+            const item = document.createElement('div');
+            item.style.cssText = `
+                position: absolute;
+                left: 0;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                background: rgba(0,0,0,0.6);
+                padding: 8px 15px;
+                border-radius: 30px;
+                animation: trackMove ${type === 'luxury' ? 8 : 6}s linear forwards;
+            `;
+            
+            item.innerHTML = `
+                <span style="font-size: 24px;">${getGiftEmoji(giftName)}</span>
+                <span style="color: #fff;">${getUserName()}</span>
+            `;
+            
+            track.appendChild(item);
+            document.body.appendChild(track);
+            
+            // 画结束后移除
+            setTimeout(() => track.remove(), type === 'luxury' ? 8000 : 6000);
+        }
+
+        // 添加充值相关功能
+        let selectedAmount = 0;
+        let selectedPayment = 'wechat';
+
+        function showRechargeModal() {
+            document.getElementById('rechargeModal').style.display = 'flex';
+        }
+
+        function closeRechargeModal() {
+            document.getElementById('rechargeModal').style.display = 'none';
+        }
+
+        function selectRechargeAmount(amount) {
+            selectedAmount = amount;
+            // 移除其他选项的选中状态
+            document.querySelectorAll('.recharge-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            // 添加当前选项的选中状态
+            event.currentTarget.classList.add('selected');
+        }
+
+        function selectPaymentMethod(method) {
+            selectedPayment = method;
+            // 移除其他支付方式的选中状态
+            document.querySelectorAll('.payment-method').forEach(item => {
+                item.classList.remove('active');
+            });
+            // 添加当前支付方式的选中状态
+            event.currentTarget.classList.add('active');
+        }
+
+        function confirmRecharge() {
+            if (selectedAmount === 0) {
+                alert('请选择充值金额');
+                return;
+            }
+            
+            // 这里可以添加实际的支付逻辑
+            alert(`正在跳转${selectedPayment === 'wechat' ? '微信' : '支付宝'}支付...`);
+            
+            // 模拟支付成功
+            setTimeout(() => {
+                const currentCoins = parseInt(document.getElementById('userCoins').textContent);
+                const newCoins = currentCoins + selectedAmount;
+                document.getElementById('userCoins').textContent = newCoins;
+                
+                closeRechargeModal();
+                alert('充值成功！');
+            }, 1000);
+        }
+    </script>
+</body>
+</html> 

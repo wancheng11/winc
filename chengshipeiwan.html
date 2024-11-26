@@ -1,0 +1,3690 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>城市陪玩</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- 引入高德地图 API -->
+    <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode: 'your_security_js_code',
+        }
+    </script>
+    <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=your_amap_key"></script>
+    <style>
+        /* 基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            line-height: 1.6;
+        }
+
+        /* 头部搜索区域样式 */
+        .header {
+            background: #fff;
+            padding: 10px 16px;
+            position: relative;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 定位按钮样式 */
+        .location-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #333;
+            font-size: 14px;
+            padding: 4px 8px;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+
+        .location-btn .material-icons {
+            font-size: 16px;
+            color: #FF6B6B;
+        }
+
+        /* 搜索框样式 */
+        .search-box {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border-radius: 16px;
+            padding: 6px 12px;
+            border: 1px solid #FF6B6B;
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus-within {
+            box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.2);
+        }
+
+        .search-box .material-icons {
+            color: #FF6B6B;
+            font-size: 18px;
+            margin-right: 6px;
+        }
+
+        .search-box input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            color: #333;
+            outline: none;
+            padding: 0;
+        }
+
+        .search-box input::placeholder {
+            color: #999;
+            opacity: 1;
+        }
+
+        /* 城市选择面板样式 */
+        .city-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #fff;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+        }
+
+        .city-panel.show {
+            display: flex;
+        }
+
+        .city-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .city-title {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .close-btn {
+            padding: 4px;
+            cursor: pointer;
+        }
+
+        .city-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .city-section {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 10px;
+        }
+
+        .city-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            padding: 5px;
+        }
+
+        .city-item {
+            padding: 10px;
+            text-align: center;
+            background: #f5f5f5;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .city-item:active {
+            background: #e0e0e0;
+        }
+
+        .city-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            display: block;
+        }
+
+        .city-type {
+            font-size: 10px;
+            color: #999;
+            margin-top: 4px;
+            display: block;
+        }
+
+        /* 小屏幕适配 */
+        @media screen and (max-width: 320px) {
+            .city-list {
+                gap: 8px;
+            }
+            
+            .city-item {
+                padding: 8px;
+            }
+            
+            .city-name {
+                font-size: 13px;
+            }
+            
+            .city-type {
+                font-size: 9px;
+            }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #FF6B6B;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 添加城市搜索框样式 */
+        .city-search {
+            padding: 12px 16px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .city-search .search-box {
+            background: #f5f5f5;
+            border-radius: 20px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        .city-search input {
+            flex: 1;
+            border: none;
+            background: none;
+            font-size: 14px;
+            outline: none;
+            margin-left: 8px;
+        }
+
+        /* 修改搜索结果样式 */
+        .search-results {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .city-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+
+        .city-item:hover {
+            background: #f5f5f5;
+        }
+
+        .city-item .city-name {
+            font-size: 14px;
+            color: #333;
+        }
+
+        .city-item .country-name {
+            font-size: 12px;
+            color: #999;
+            margin-left: 8px;
+        }
+
+        /* 添加加载动画样式 */
+        .loading-dots {
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .loading-dots span {
+            width: 4px;
+            height: 4px;
+            background: #999;
+            border-radius: 50%;
+            animation: dots 1s infinite;
+        }
+
+        @keyframes dots {
+            50% { transform: translateY(-4px); }
+        }
+
+        /* 修改搜索结果样式 */
+        .city-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .city-item:hover {
+            background-color: #f8f8f8;
+        }
+
+        .city-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-right: 8px;
+        }
+
+        .region-name {
+            font-size: 12px;
+            color: #666;
+            margin-right: 4px;
+        }
+
+        .country-name {
+            font-size: 12px;
+            color: #999;
+            margin-right: 8px;
+        }
+
+        .population {
+            font-size: 11px;
+            color: #999;
+            margin-left: auto;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+
+        .error {
+            text-align: center;
+            padding: 20px;
+            color: #ff4444;
+        }
+
+        /* 添加搜索输入框动画效果 */
+        .city-search .search-box {
+            transition: all 0.3s ease;
+        }
+
+        .city-search .search-box:focus-within {
+            box-shadow: 0 0 0 2px rgba(255,107,107,0.2);
+        }
+
+        /* 禁止页面左右滑动和缩放 */
+        html, body {
+            overflow-x: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            touch-action: pan-y pinch-zoom;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
+        }
+
+        /* 主容器样式 */
+        .main-container {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: relative;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 80px; /* 为底部按钮留出空间 */
+        }
+
+        /* 动返回区域样式 */
+        .slide-back-area {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 20px;
+            z-index: 1000;
+        }
+
+        /* 适配不同机型的安全区域 */
+        @supports (padding: max(0px)) {
+            .header {
+                padding-top: max(16px, env(safe-area-inset-top));
+                padding-left: max(16px, env(safe-area-inset-left));
+                padding-right: max(16px, env(safe-area-inset-right));
+            }
+
+            .city-panel {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+        }
+
+        /* 修改公告栏样式 */
+        .notice-bar {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(5px);
+            margin: 8px 16px;
+            border-radius: 8px;
+            overflow: hidden;
+            height: 36px;  /* 固定高度 */
+        }
+
+        .notice-content {
+            flex: 1;
+            height: 20px;  /* 固定高度 */
+            overflow: hidden;
+            position: relative;
+        }
+
+        .notice-wrapper {
+            position: absolute;
+            width: 100%;
+            animation: scrollNotice 12s steps(1) infinite;  /* 使用 steps 实现逐条滚动 */
+        }
+
+        .notice-item {
+            height: 20px;
+            line-height: 20px;
+            font-size: 13px;
+            color: #FF6B6B;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 修改滚动动画 */
+        @keyframes scrollNotice {
+            0% {
+                transform: translateY(0);
+            }
+            33% {
+                transform: translateY(-20px);
+            }
+            66% {
+                transform: translateY(-40px);
+            }
+            100% {
+                transform: translateY(-60px);
+            }
+        }
+
+        /* 修��公告图标样式 */
+        .notice-icon {
+            color: #FF6B6B;
+            font-size: 18px;
+            margin-right: 8px;
+            flex-shrink: 0;
+            animation: noticeIconPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes noticeIconPulse {
+            0%, 100% { 
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% { 
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        /* 添加轮播图样式 */
+        .banner {
+            width: 90%;
+            height: 140px;  /* 固定高度 */
+            margin: 10px auto;
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .banner-wrapper {
+            display: flex;
+            width: 200%;  /* 两张图片的宽度 */
+            height: 100%;
+            transition: transform 0.3s ease;
+        }
+
+        .banner-slide {
+            width: 50%;  /* 每张图片占50% */
+            height: 100%;
+        }
+
+        .banner-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+
+        /* 轮播图指示器样式 */
+        .banner-dots {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dot.active {
+            background: #fff;
+            transform: scale(1.2);
+        }
+
+        /* 修改公告弹窗样式 */
+        .notice-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .notice-modal.show {
+            display: flex;
+        }
+
+        .notice-modal-content {
+            background: white;
+            width: 90%;
+            max-width: 320px;
+            border-radius: 12px;
+            padding: 20px;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: modalSlideUp 0.3s ease;
+        }
+
+        .notice-modal-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            text-align: center;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .notice-modal-body {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .notice-content-item {
+            margin-bottom: 16px;
+        }
+
+        .notice-content-item h4 {
+            color: #FF6B6B;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+
+        .notice-content-item p {
+            margin-bottom: 8px;
+        }
+
+        .notice-content-item ul {
+            padding-left: 20px;
+            margin-bottom: 12px;
+        }
+
+        .notice-content-item li {
+            margin-bottom: 6px;
+            color: #666;
+        }
+
+        .notice-modal-close {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .notice-modal-button {
+            background: #FF6B6B;
+            color: white;
+            border: none;
+            padding: 8px 24px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .notice-modal-button:active {
+            transform: scale(0.95);
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            
+}
+        
+
+        /* 修改分类菜单样式 */
+        .category-menu {
+            display: flex;
+            justify-content: flex-start; /* 改为左对齐 */
+            align-items: center;
+            padding: 12px 15px;
+            background: #fff;
+            margin: 10px 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            overflow-x: auto; /* 允许横向滚动 */
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+
+        .category-menu::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+
+        .category-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 12px;
+            min-width: auto; /* 移除最小宽度限制 */
+            flex-shrink: 0; /* 防止压缩 */
+        }
+
+        .category-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .category-icon .material-icons {
+            font-size: 16px;
+            color: #fff;
+        }
+
+        .category-text {
+            font-size: 12px;
+            color: #333;
+            white-space: nowrap; /* 防止文字换行 */
+        }
+
+        /* 小���幕适配 */
+        @media screen and (max-width: 320px) {
+            .category-menu {
+                padding: 10px 12px;
+            }
+            
+            .category-item {
+                padding: 0 10px;
+            }
+            
+            .category-icon {
+                width: 28px;
+                height: 28px;
+            }
+            
+            .category-icon .material-icons {
+                font-size: 14px;
+            }
+            
+            .category-text {
+                font-size: 11px;
+            }
+        }
+
+        /* 在分类菜单后添加官方推荐商品列表 */
+        .recommend-section {
+            margin: 15px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .section-title .material-icons {
+            font-size: 20px;
+        }
+
+        .section-title span {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .product-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .product-item {
+            display: flex;
+            padding: 12px;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #f0f0f0;
+            transition: transform 0.2s;
+            width: 100%;
+        }
+
+        .product-item:active {
+            transform: scale(0.98);
+        }
+
+        .product-image {
+            width: 70px;
+            height: 70px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 4px 0;
+            min-width: 0;
+        }
+
+        .product-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: nowrap;
+        }
+
+        .product-name {
+            font-size: 15px;
+            font-weight: 500;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        .basic-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-size: 12px;
+            flex-wrap: nowrap;
+            margin-left: 8px;
+        }
+
+        .basic-info span {
+            position: relative;
+            padding-right: 8px;
+            white-space: nowrap;
+        }
+
+        .basic-info span:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 1px;
+            height: 10px;
+            background: #eee;
+        }
+
+        .product-tags {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .tag {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .tag.location, .tag.service {
+            font-size: 10px;
+        }
+
+        .product-price {
+            font-size: 16px;
+            font-weight: 500;
+            color: #FF6B6B;
+            margin-top: 8px;
+        }
+
+        /* 不同类型标签的样式 */
+        .tag.location {
+            background: #E8F5E9;
+            color: #4CAF50;
+        }
+
+        .tag.age {
+            background: #E3F2FD;
+            color: #2196F3;
+        }
+
+        .tag.personality {
+            background: #FFF3E0;
+            color: #FF9800;
+        }
+
+        .tag.service {
+            background: #F3E5F5;
+            color: #9C27B0;
+        }
+
+        /* 标签容器样式优化 */
+        .product-tags {
+            margin: 8px 0;
+            line-height: 1.2;
+        }
+
+        /* 小屏幕适配 */
+        @media screen and (max-width: 320px) {
+            .recommend-section {
+                margin: 10px;
+                padding: 12px;
+            }
+
+            .product-name {
+                font-size: 14px;
+            }
+            
+            .basic-info {
+                font-size: 11px;
+                gap: 6px;
+            }
+            
+            .product-image {
+                width: 65px;
+                height: 65px;
+            }
+        }
+
+        /* 添加商品项的点击效果样式 */
+        .product-item {
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .product-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .product-item:active {
+            transform: scale(0.98);
+        }
+
+        /* 在分类菜单�������面添加筛选容��� */
+        .filter-container {
+            margin: 10px 16px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        /* 分类选项样式 */
+        .service-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+            padding: 0 4px;
+        }
+
+        .option-item {
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 13px;
+            color: #666;
+            background: #f5f5f5;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .option-item.active {
+            background: #FF6B6B;
+            color: white;
+        }
+
+        .option-item:active {
+            transform: scale(0.95);
+        }
+
+        /* 筛选选项样式 */
+        .filter-section.filter-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 10px 0;
+            padding-bottom: 0;
+        }
+
+        /* 统一筛选选项按钮样式 */
+        .filter-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            height: 40px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 0;
+            position: relative;
+        }
+
+        .filter-item .material-icons {
+            color: #FF6B6B;
+            margin-right: 8px;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .filter-text {
+            flex: 1;
+            color: #333;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 0;
+        }
+
+        .arrow {
+            color: #999;
+            font-size: 18px;
+            margin-left: 4px;
+            flex-shrink: 0;
+        }
+
+        /* 选中状态样式 */
+        .filter-item.selected {
+            background: #FFF0F0;
+        }
+
+        .filter-item.selected .filter-text {
+            color: #FF6B6B;
+        }
+
+        /* 小屏幕适配 */
+        @media screen and (max-width: 320px) {
+            .filter-item {
+                padding: 6px 10px;
+                height: 36px;
+            }
+            
+            .filter-text {
+                font-size: 13px;
+            }
+            
+            .filter-item .material-icons,
+            .arrow {
+                font-size: 16px;
+            }
+        }
+
+        /* 预约按钮样式 */
+        .book-section {
+            margin-top: 20px;
+        }
+
+        .book-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(255,107,107,0.2);
+        }
+
+        .book-btn:active {
+            transform: scale(0.98);
+            box-shadow: 0 1px 4px rgba(255,107,107,0.2);
+        }
+
+        /* ���改分类�����样式 */
+        .category-tabs-container {
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .category-tabs {
+            display: flex;
+            position: relative;
+            width: 100%;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .category-tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px 0;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        .category-tab.active {
+            color: #FF6B6B;
+            font-weight: 500;
+        }
+
+        .category-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 2px;
+            background: #FF6B6B;
+            border-radius: 1px;
+        }
+
+        /* 修改服务选项容器样式 */
+        .service-options-wrapper {
+            position: relative;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .service-options {
+            width: 100%;
+            transition: transform 0.3s ease;
+        }
+
+        .options-scroll {
+            display: flex;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+            padding: 5px 0;
+        }
+
+        .options-scroll::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+
+        .option-item {
+            flex: 0 0 auto;
+            padding: 6px 16px;
+            margin-right: 8px;
+            border-radius: 16px;
+            font-size: 13px;
+            color: #666;
+            background: #f5f5f5;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .option-item:last-child {
+            margin-right: 0;
+        }
+
+        .option-item.active {
+            background: #FF6B6B;
+            color: white;
+        }
+
+        /* 修改搜索框部分为预约按钮 */
+        .filter-section.book-section {
+            margin-top: 15px;
+        }
+
+        .book-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(255,107,107,0.2);
+        }
+
+        .book-btn:active {
+            transform: scale(0.98);
+            box-shadow: 0 1px 4px rgba(255,107,107,0.2);
+        }
+
+        .options-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: flex-end;
+            z-index: 1000;
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        .options-content {
+            width: 100%;
+            background: white;
+            border-radius: 16px 16px 0 0;
+            padding: 16px;
+            animation: modalSlideUp 0.3s ease;
+        }
+
+        .options-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .options-header span {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .options-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .option {
+            padding: 8px;
+            text-align: center;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .option:active {
+            background: #FF6B6B;
+            color: white;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes modalSlideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        /* 修改服务选项容器样式 */
+        .service-options {
+            margin: 8px 0;
+        }
+
+        .options-scroll {
+            display: flex;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding: 4px 0;
+        }
+
+        /* 修改选项样式 */
+        .option-item {
+            flex: 0 0 auto;
+            padding: 4px 12px;
+            margin-right: 6px;
+            font-size: 12px;
+            color: #666;
+            background: #f7f7f7;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .option-item.active {
+            color: #FF6B6B;
+            background: #f7f7f7;
+        }
+
+        .option-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 12px;
+            height: 2px;
+            background: #FF6B6B;
+            border-radius: 1px;
+        }
+
+        /* 移除原有的选����背景色样��� */
+        .option-item.active {
+            color: #FF6B6B;
+            background: #f5f5f5;
+        }
+
+        /* 添加选中状态下的横线 */
+        .option-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 16px); /* 横线宽度略小于选项宽度 */
+            height: 2px;
+            background: #FF6B6B;
+            border-radius: 1px;
+        }
+
+        /* 确保娱乐陪玩和旅游陪的选样式一致 */
+        .entertainment-options .option-item,
+        .travel-options .option-item {
+            padding: 4px 12px;
+            margin-right: 6px;
+            font-size: 12px;
+            color: #666;
+            background: #f7f7f7;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .entertainment-options .option-item.active,
+        .travel-options .option-item.active {
+            color: #FF6B6B;
+            background: #f7f7f7;
+        }
+
+        .entertainment-options .option-item.active::after,
+        .travel-options .option-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 12px;
+            height: 2px;
+            background: #FF6B6B;
+            border-radius: 1px;
+        }
+
+        /* 添加点击效果 */
+        .option-item:active {
+            opacity: 0.8;
+        }
+
+        /* 添加筛选选项样式 */
+        .filter-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+        .filter-item {
+            padding: 6px 10px;
+            border: 1px solid #eee;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            background: #fff;
+            transition: all 0.2s ease;
+        }
+
+        /* 添��选中状态样式 */
+        .filter-item.selected .filter-text {
+            color: #FF6B6B;
+        }
+
+        .filter-item.selected i {
+            color: #FF6B6B;
+        }
+
+        .filter-item:active {
+            background: #f9f9f9;
+        }
+
+        .filter-item i {
+            font-size: 14px;
+            color: #999;
+        }
+
+        .filter-text {
+            font-size: 12px;
+            color: #666;
+            flex: 1;
+        }
+
+        .arrow {
+            font-size: 14px;
+            color: #999;
+        }
+
+        /* 修改分类标�����������式 */
+        .category-tabs {
+            display: flex;
+            position: relative;
+            width: 100%;
+            border-bottom: 1px solid #f5f5f5;
+            padding: 0 4px;
+        }
+
+        .category-tab {
+            flex: 1;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .category-tab.active {
+            color: #FF6B6B;
+            font-weight: 500;
+        }
+
+        .category-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 2px;
+            background: #FF6B6B;
+            border-radius: 1px;
+        }
+
+        /* 修改选项模态框样式 */
+        .options-modal .options-content {
+            padding: 16px;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .options-header {
+            margin-bottom: 12px;
+        }
+
+        .options-header span {
+            font-size: 13px;
+        }
+
+        .options-list {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            padding: 4px;
+        }
+
+        .option {
+            padding: 8px;
+            font-size: 12px;
+            border-radius: 12px;
+            background: #f5f5f5;
+        }
+
+        .option:active {
+            background: #FF6B6B;
+            color: white;
+        }
+
+        /* 修改日期选择器样式 */
+        .date-picker input[type="date"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            font-size: 13px;
+            color: #333;
+            outline: none;
+        }
+
+        /* 适配屏幕 */
+        @media screen and (max-width: 320px) {
+            .option-item {
+                font-size: 11px;
+                padding: 3px 10px;
+            }
+
+            .filter-item {
+                padding: 5px 8px;
+            }
+
+            .filter-text {
+                font-size: 11px;
+            }
+
+            .filter-item i {
+                font-size: 13px;
+            }
+        }
+
+        .sweet-alert {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 25px;
+            text-align: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .sweet-alert-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .sweet-alert-title {
+            font-size: 14px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* 添加价格显示样式 */
+        .price-section {
+            margin-top: 20px;
+            padding: 0 5px;
+        }
+
+        .price-display {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-top: 1px solid #f0f0f0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .price-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .price-value {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #unitPrice {
+            font-size: 13px;
+            color: #999;
+        }
+
+        .total-price {
+            font-size: 18px;
+            font-weight: 500;
+            color: #FF6B6B;
+        }
+
+        /* ���费���显示�����������添加温馨提����� */
+        .tips-scroll {
+            margin: 10px 0;
+            height: 20px;
+            overflow: hidden;
+        }
+
+        .tips-wrapper {
+            position: relative;
+        }
+
+        .tips-content {
+            color: #FF6B6B;
+            font-size: 12px;
+            line-height: 20px;
+            text-align: center;
+            animation: scrollTips 20s steps(1) infinite; /* 增加动画时间到20秒 */
+        }
+
+        .tip-item {
+            height: 20px;
+            line-height: 20px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 修改动画关键帧，使切换更加平滑 */
+        @keyframes scrollTips {
+            0%, 24% {
+                transform: translateY(0);
+            }
+            25%, 49% {
+                transform: translateY(-20px);
+            }
+            50%, 74% {
+                transform: translateY(-40px);
+            }
+            75%, 100% {
+                transform: translateY(-60px);
+            }
+        }
+
+        /* 添��预约弹窗样�� */
+        .booking-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .booking-content {
+            background: white;
+            width: 90%;
+            max-width: 320px;
+            border-radius: 12px;
+            padding: 20px;
+            animation: modalSlideUp 0.3s ease;
+        }
+
+        .booking-content h3 {
+            text-align: center;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .booking-content h3 i {
+            color: #4CAF50;
+            font-size: 20px;
+        }
+
+        /* 修改确认按钮容器样式 */
+        .booking-actions {
+            text-align: center;
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* 修改确认按钮样式 */
+        .confirm-btn {
+            background: #FF6B6B;
+            color: white;
+            border: none;
+            padding: 10px 40px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: auto;
+            min-width: 120px;
+        }
+
+        .confirm-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .confirm-btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        .booking-details {
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .detail-item .label {
+            color: #666;
+        }
+
+        .detail-item .value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .agreement-section {
+            margin: 15px 0;
+        }
+
+        .agreement-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .agreement-checkbox {
+            margin-right: 8px;
+        }
+
+        .agreement-item label {
+            font-size: 13px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            gap: 4px;
+        }
+
+        .agreement-link {
+            color: #2196F3;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .countdown {
+            text-align: center;
+            color: #FF6B6B;
+            font-size: 14px;
+            margin-top: 15px;
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* 添加协议链接样式 */
+        .agreement-link {
+            color: #2196F3;
+            text-decoration: none;
+            cursor: pointer;
+            padding: 0 2px;
+        }
+
+        .agreement-link:active {
+            opacity: 0.8;
+        }
+
+        /* 修改协议选项样式,确保在一行显示且不超出 */
+        .agreement-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            overflow: hidden; /* 添加此行 */
+        }
+
+        .agreement-item label {
+            font-size: 12px; /* 减小字体大小 */
+            color: #666;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            gap: 2px; /* 减小间距 */
+            overflow: hidden; /* 添加此行 */
+            text-overflow: ellipsis; /* 添加此行 */
+        }
+
+        .agreement-link {
+            color: #2196F3;
+            text-decoration: none;
+            cursor: pointer;
+            padding: 0 1px; /* 减小内边距 */
+            flex-shrink: 0; /* 防止链接文字被压缩 */
+        }
+
+        .agreement-checkbox {
+            margin-right: 4px; /* 减小复选框右边距 */
+            flex-shrink: 0; /* 防止复选框被压缩 */
+        }
+
+        .auto-close-tip {
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            margin-top: 15px;
+        }
+
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translate(-50%, -40%);
+            }
+            to { 
+                opacity: 1; 
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        /* 添加选择陪玩链接样式 */
+        .select-player-link {
+            color: #FF6B6B;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .select-player-link:active {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-back-area"></div>
+    <div class="main-container">
+        <div class="header">
+            <div class="search-container">
+                <button class="location-btn" id="locationBtn">
+                    <i class="material-icons">location_on</i>
+                    <span id="currentCity">定位中...</span>
+                </button>
+                <div class="search-box">
+                    <i class="material-icons">search</i>
+                    <input type="text" placeholder="搜索陪玩">
+                </div>
+            </div>
+        </div>
+
+        <!-- 在 header 下方添加公告栏 -->
+        <div class="notice-bar">
+            <i class="material-icons notice-icon">campaign</i>
+            <div class="notice-content">
+                <div class="notice-wrapper">
+                    <div class="notice-item">《下单陪玩须知》</div>
+                    <div class="notice-item">《陪玩注意事项》</div>
+                    <div class="notice-item">《私自下单声明》</div>
+                    <div class="notice-item">《下单陪玩须知》</div> <!-- 重复第一条实现无缝滚动 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 在公告栏下方添加轮播图 -->
+        <div class="banner">
+            <div class="banner-wrapper" id="bannerWrapper">
+                <div class="banner-slide">
+                    <img src="https://s1.imagehub.cc/images/2024/11/26/c615de5d1d3b6c1ae0693da6c14d1af6.png" alt="banner1">
+                </div>
+                <div class="banner-slide">
+                    <img src="https://s1.imagehub.cc/images/2024/11/26/18f56fd9b236f9634b41972a75d6a5b8.png" alt="banner2">
+                </div>
+            </div>
+            <div class="banner-dots">
+                <span class="dot active"></span>
+                <span class="dot"></span>
+            </div>
+        </div>
+
+        <!-- 在轮播图后面添加分类菜单 -->
+        <div class="category-menu">
+            <div class="category-item">
+                <div class="category-icon">
+                    <i class="material-icons">card_giftcard</i>
+                </div>
+                <span class="category-text">陪玩盲盒</span>
+            </div>
+            <div class="category-item">
+                <div class="category-icon">
+                    <i class="material-icons">emoji_events</i>
+                </div>
+                <span class="category-text">陪玩达人</span>
+            </div>
+            <div class="category-item">
+                <div class="category-icon">
+                    <i class="material-icons">new_releases</i>
+                </div>
+                <span class="category-text">最新陪玩</span>
+            </div>
+            <div class="category-item">
+                <div class="category-icon">
+                    <i class="material-icons">local_activity</i>
+                </div>
+                <span class="category-text">最新活动</span>
+            </div>
+        </div>
+
+        <!-- 在分类菜单后面添加筛选容器 -->
+        <div class="filter-container">
+            <!-- 分类选择 -->
+            <div class="category-tabs-container">
+                <div class="category-tabs">
+                    <div class="category-tab active" data-category="entertainment">娱乐陪玩</div>
+                    <div class="category-tab" data-category="travel">旅游陪玩</div>
+                    <div class="tab-indicator"></div>
+                </div>
+            </div>
+            
+            <!-- 服务选项容器 -->
+            <div class="service-options-wrapper">
+                <!-- 娱乐陪玩选项 -->
+                <div class="service-options entertainment-options" id="entertainmentOptions">
+                    <div class="options-scroll">
+                        <div class="option-item active">剧本杀</div>
+                        <div class="option-item">酒吧狂欢</div>
+                        <div class="option-item">欢唱派对</div>
+                        <div class="option-item">桌球助教</div>
+                        <div class="option-item">商务应酬</div>
+                        <div class="option-item">逛街��影</div>
+                        <div class="option-item">密室逃脱</div>
+                    </div>
+                </div>
+                <!-- 旅游������选项 -->
+                <div class="service-options travel-options" id="travelOptions" style="display: none;">
+                    <div class="options-scroll">
+                        <div class="option-item active">同城游</div>
+                        <div class="option-item">跨市游</div>
+                        <div class="option-item">跨省游</div>
+                        <div class="option-item">国际游</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 筛��选项 -->
+            <div class="filter-section filter-options">
+                <div class="filter-item" onclick="showDestinationSelect()">
+                    <i class="material-icons">place</i>
+                    <span class="filter-text" id="selectedDestination">选择目的地</span>
+                    <i class="material-icons arrow">keyboard_arrow_down</i>
+                </div>
+                
+                <div class="filter-item" onclick="showDatePicker()">
+                    <i class="material-icons">event</i>
+                    <span class="filter-text" id="selectedDate">选择日期</span>
+                    <i class="material-icons arrow">keyboard_arrow_down</i>
+                </div>
+                
+                <div class="filter-item" onclick="showGenderSelect()">
+                    <i class="material-icons">person</i>
+                    <span class="filter-text" id="selectedGender">选择性别</span>
+                    <i class="material-icons arrow">keyboard_arrow_down</i>
+                </div>
+                
+                <div class="filter-item" onclick="showDurationSelect()">
+                    <i class="material-icons">schedule</i>
+                    <span class="filter-text" id="selectedDuration">服务时长</span>
+                    <i class="material-icons arrow">keyboard_arrow_down</i>
+                </div>
+                
+                <!-- 修改服务时间选项 -->
+                <div class="filter-item service-time-item" onclick="showTimeSelect()">
+                    <i class="material-icons">access_time</i>
+                    <span class="filter-text" id="selectedTime">服务时间</span>
+                    <i class="material-icons arrow">keyboard_arrow_down</i>
+                </div>
+
+                <!-- 添��预订人选项 -->
+                <div class="filter-item" onclick="showBookerInput()">
+                    <i class="material-icons">person_outline</i>
+                    <span class="filter-text" id="selectedBooker">预订人</span>
+                    <i class="material-icons arrow">keyboard_arrow_down</i>
+                </div>
+
+                <!-- 添加预定手机号选项 -->
+                <div class="filter-item" onclick="showPhoneInput()">
+                    <i class="material-icons">phone</i>
+                    <span class="filter-text" id="selectedPhone">预定手机号</span>
+                    <i class="material-icons arrow">keyboard_arrow_down</i>
+                </div>
+            </div>
+            
+            <!-- 费用显示 -->
+            <div class="filter-section price-section">
+                <div class="price-display">
+                    <div class="price-label">费用：</div>
+                    <div class="price-value">
+                        <span id="unitPrice">--</span>
+                        <span id="totalPrice" class="total-price">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 温馨提示 -->
+            <div class="tips-section">
+                <div class="tips-scroll">
+                    <div class="tips-wrapper">
+                        <div class="tips-content" id="tipsContent"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 预约按钮 -->
+            <div class="filter-section book-section">
+                <button class="book-btn" onclick="handleBooking()">立即预约</button>
+            </div>
+        </div>
+
+        <!-- 城市选择面板 -->
+        <div class="city-panel" id="cityPanel">
+            <div class="city-header">
+                <div class="city-title">选择�����市</div>
+                <div class="close-btn" onclick="closeCityPanel()">
+                    <i class="material-icons">close</i>
+                </div>
+            </div>
+            <div class="city-search">
+                <div class="search-box">
+                    <i class="material-icons">search</i>
+                    <input type="text" id="citySearchInput" placeholder="搜索全球城市" oninput="searchCities(this.value)">
+                </div>
+            </div>
+            <div class="city-content">
+                <div class="city-section">
+                    <div class="section-title">当前定位城市</div>
+                    <div class="city-item" id="locationCity">定位中...</div>
+                </div>
+                <div class="city-section">
+                    <div class="section-title">热门城���</div>
+                    <div class="city-list" id="popularCities">
+                        <!-- 热门城市将通过 JS ���态添加 -->
+                    </div>
+                </div>
+                <div class="city-section">
+                    <div class="section-title">搜索结果</div>
+                    <div class="city-list" id="searchResults"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 加载遮罩 -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+
+    <script>
+        // 显示加载中
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        // 隐藏加载中
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        // 获取当前城市
+        async function getCurrentCity() {
+            showLoading();
+            try {
+                // ��试使用高德���图 IP 定位
+                const ipCity = await getIpLocation();
+                updateCityDisplay(ipCity);
+
+                // 如果浏览器支持地理定位，尝试获取更精确的位置
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        async position => {
+                            const { latitude, longitude } = position.coords;
+                            const city = await getGeoLocation(latitude, longitude);
+                            updateCityDisplay(city);
+                        },
+                        error => {
+                            console.log('GPS定位失败，使用IP定位结果');
+                        }
+                    );
+                }
+            } catch (error) {
+                console.error('定位失败：', error);
+                updateCityDisplay('定位失败');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // IP定位
+        async function getIpLocation() {
+            try {
+                const response = await fetch('https://restapi.amap.com/v3/ip?key=your_amap_key');
+                const data = await response.json();
+                if (data.status === '1') {
+                    return data.city || data.province;
+                }
+                throw new Error('IP定位失败');
+            } catch (error) {
+                throw new Error('IP定位服务异常');
+            }
+        }
+
+        // 经���度转城市
+        async function getGeoLocation(latitude, longitude) {
+            try {
+                const response = await fetch(`https://restapi.amap.com/v3/geocode/regeo?key=your_amap_key&location=${longitude},${latitude}`);
+                const data = await response.json();
+                if (data.status === '1') {
+                    return data.regeocode.addressComponent.city || data.regeocode.addressComponent.province;
+                }
+                throw new Error('地理编码失败');
+            } catch (error) {
+                throw new Error('地理编码服务异常');
+            }
+        }
+
+        // 更新城市显��
+        function updateCityDisplay(city) {
+            document.getElementById('currentCity').textContent = city;
+            document.getElementById('locationCity').textContent = city;
+            // 保存到本地存储
+            localStorage.setItem('selectedCity', city);
+        }
+
+        // 显示城市选择面板
+        function showCityPanel() {
+            document.getElementById('cityPanel').classList.add('show');
+        }
+
+        // 关闭城市������面板
+        function closeCityPanel() {
+            document.getElementById('cityPanel').classList.remove('show');
+        }
+
+        // 选择城市
+        function selectCity(city) {
+            updateCityDisplay(city);
+            closeCityPanel();
+        }
+
+        // 页面加载时检查本地存储的城市，如果���有则自动定位
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedCity = localStorage.getItem('selectedCity');
+            if (savedCity) {
+                updateCityDisplay(savedCity);
+            } else {
+                getCurrentCity();
+            }
+        });
+
+        // 点击定位按钮显示城市选择面板
+        document.getElementById('locationBtn').addEventListener('click', showCityPanel);
+
+        // 修改城市数据
+        const allCities = {
+            // 直辖��
+            municipalities: [
+                { name: '北京', type: '直辖��' },
+                { name: '上海', type: '������市' },
+                { name: '天津', type: '直辖市' },
+                { name: '重庆', type: '直辖市' }
+            ],
+            
+            // 各省份城市
+            provinces: {
+                '河北省': ['石家庄', '唐山', '��皇岛', '邯郸', '邢台', '保定', '张家口', '承德', '沧州', '廊坊', '衡水'],
+                '山西省': ['太原', '��同', '阳泉', '长治', '大同', '朔州', '晋中', '运城', '忻州', '临汾', '���梁'],
+                '内蒙': ['呼和浩���', '包头', '乌海', '赤峰', '通辽', '鄂尔多斯', '呼伦贝尔', '巴彦淖尔', '乌兰察布'],
+                '辽宁省': ['沈阳', '大连', '鞍山', '抚顺', '本溪', '丹东', '锦州', '��口', '���新', '辽��', '盘锦', '铁岭', '朝阳', '葫芦岛'],
+                '吉林省': ['长春', '吉林', '四平', '辽源', '通化', '白山', '', '白城'],
+                '黑龙江省': ['哈尔滨', '齐齐哈尔', '鸡��', '鹤岗', '双鸭山', '大庆', '伊春', '佳木斯', '七台河', '牡丹江', '黑河', '绥化'],
+                '江苏省': ['南京', '无锡', '徐州', '常州', '苏州', '南通', '连云港', '淮��', '盐城', '扬州', '���江', '泰州', '宿迁'],
+                '浙江省': ['杭州', '宁波', '温州', '嘉兴', '湖州', '绍兴', '金华', '衢州', '舟山', '台州', '丽水'],
+                '安徽省': ['合肥', '芜湖', '蚌埠', '淮���', '马鞍山', '淮北', '铜陵', '安庆', '黄山', '滁州', '阜��', '宿州', '���安', '亳州', '�����', '宣���'],
+                '福建省': ['福州', '厦��', '���田', '���明', '泉州', '漳州', '南平', '龙岩', '宁德'],
+                '江西省': ['南��', '景德镇', '萍乡', '九江', '新余', '鹰潭', '赣���', '吉安', '宜��', '抚州', '上饶'],
+                '山东省': ['济南', '青岛', '淄博', '枣��', '东营', '烟台', '潍坊', '威海', '济宁', '泰安', '日照', '莱芜', '临沂', '德州', '聊城', '滨州', '菏泽'],
+                '河南省': ['郑州', '开封', '洛��', '平���山', '焦作', '鹤壁', '新乡', '安阳', '濮阳', '许昌', '漯河', '三门峡', '南阳', '商丘', '信阳', '驻马店'],
+                '湖北���': ['��汉', '黄石', '襄阳', '十堰', '荆州', '宜昌', '荆门', '鄂州', '孝感', '黄冈', '咸宁', '随州'],
+                '湖南省': ['长沙', '株洲', '湘潭', '衡阳', '邵阳', '岳阳', '常德', '张家界', '益阳', '郴州', '永州', '���化', '娄底'],
+                '广东省': ['广州', '深圳', '珠海', '汕头', '韶关', '佛山', '江门', '湛��', '茂名', '肇庆', '惠州', '梅州', '汕尾', '河源', '阳江', '清远', '东莞', '中山', '潮州', '揭阳', '云浮'],
+                '广西': ['南宁', '柳��', '桂林', '梧州', '北��', '防城���', '钦州', '贵港', '玉林', '百色', '贺州', '河池', '来宾', '崇���'],
+                '海南省': ['海口', '三���', '三沙', '儋州'],
+                '四川���': ['成都', '自���', '攀枝��', '泸州', '德阳', '绵阳', '广元', '���宁', '内江', '乐山', '南充', '宜宾', '广安', '��州', '眉山', '雅安', '巴中', '资阳'],
+                '贵州省': ['贵阳', '六盘水', '遵义', '安顺', '毕节', '铜仁'],
+                '云南省': ['昆明', '曲��', '玉溪', '保山', '昭通', '丽江', '普洱', '临沧'],
+                '西藏': ['拉萨', '日喀则', '昌都', '林芝', '山南', '那曲', '阿里'],
+                '陕西省': ['西安', '铜川', '宝鸡', '咸阳', '延安', '汉中', '榆林', '安康', '商洛'],
+                '甘肃省': ['兰州', '嘉峪关', '金昌', '白银', '天水', '武威', '张掖', '平凉', '酒泉', '庆阳', '定西', '陇南'],
+                '青海省': ['西宁', '海东'],
+                '宁��': ['银川', '石嘴山', '吴忠', '固原', '中卫'],
+                '新疆': ['乌鲁木齐', '克拉玛依', '吐鲁番', '哈密']
+            }
+        };
+
+        // 修改热门城市数据
+        const hotCities = [
+            // 辖市
+            { name: '北京', type: '直辖市' },
+            { name: '���海', type: '直辖�����' },
+            { name: '�����州', province: '广东省' },
+            { name: '深圳', province: '广���省' },
+            { name: '杭州', province: '浙江省' },
+            { name: '南京', province: '江苏��' },
+            { name: '成都', province: '四川省' },
+            { name: '重庆', type: '直���市' },
+            { name: '武����', province: '���北省' },
+            { name: '西安', province: '陕西省' },
+            { name: '苏州', province: '江苏省' },
+            { name: '天津', type: '直辖市' }
+        ];
+
+        // 修改初始化热城市列函数
+        function initPopularCities() {
+            const popularCitiesContainer = document.getElementById('popularCities');
+            let citiesHtml = '';
+
+            // 添加热门城市
+            hotCities.forEach(city => {
+                citiesHtml += `
+                    <div class="city-item" onclick="selectCity('${city.name}')">
+                        <span class="city-name">${city.name}</span>
+                        <span class="city-type">${city.type || city.province}</span>
+                    </div>
+                `;
+            });
+
+            popularCitiesContainer.innerHTML = citiesHtml;
+        }
+
+        // 修改搜索城市函数
+        function searchCities(query) {
+            if (query.length < 1) return;
+            
+            const searchResults = document.getElementById('searchResults');
+            searchResults.innerHTML = '<div class="loading">搜索中...</div>';
+            
+            // 搜索所有城市
+            const results = [];
+            
+            // 搜索直辖市
+            allCities.municipalities.forEach(city => {
+                if (city.name.includes(query)) {
+                    results.push(`
+                        <div class="city-item" onclick="selectCity('${city.name}')">
+                            <span class="city-name">${city.name}</span>
+                            <span class="city-type">${city.type}</span>
+                        </div>
+                    `);
+                }
+            });
+            
+            // 搜索省份城市
+            Object.entries(allCities.provinces).forEach(([province, cities]) => {
+                cities.forEach(city => {
+                    if (city.includes(query)) {
+                        results.push(`
+                            <div class="city-item" onclick="selectCity('${city}')">
+                                <span class="city-name">${city}</span>
+                                <span class="province-name">${province}</span>
+                            </div>
+                        `);
+                    }
+                });
+            });
+            
+            if (results.length > 0) {
+                searchResults.innerHTML = results.join('');
+            } else {
+                searchResults.innerHTML = '<div class="no-results">未找到匹配的城市</div>';
+            }
+        }
+        
+
+        // 格式化人口数量显示
+        function formatPopulation(population) {
+            if (!population) return '';
+            if (population >= 1000000) {
+                return `${(population / 1000000).toFixed(1)}M人口`;
+            }
+            if (population >= 1000) {
+                return `${(population / 1000).toFixed(1)}K人口`;
+            }
+            return `${population}人口`;
+        }
+
+        // 添加防抖处理
+        let searchTimeout;
+        const searchInput = document.getElementById('citySearchInput');
+
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                searchCities(e.target.value.trim());
+            }, 500);
+        });
+
+        // 选择城市后的处理
+        function selectCity(cityInfo) {
+            updateCityDisplay(cityInfo);
+            closeCityPanel();
+            // 可以在这里添加其他处理逻辑
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initPopularCities();
+            const savedCity = localStorage.getItem('selectedCity');
+            if (savedCity) {
+                updateCityDisplay(savedCity);
+            } else {
+                getCurrentCity();
+            }
+        });
+
+        // 添加手势返回功能
+        let startX = 0;
+        let startY = 0;
+        const threshold = 50;
+
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (startX < 50) {  // 只在屏幕左边缘处理滑动返回
+                const deltaX = e.touches[0].clientX - startX;
+                const deltaY = Math.abs(e.touches[0].clientY - startY);
+                
+                if (deltaX > deltaY && deltaX > 0) {
+                    e.preventDefault();  // 阻止默认滚动
+                }
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            if (startX < 50) {  // 只在屏幕左边缘处理滑动返回
+                const deltaX = e.changedTouches[0].clientX - startX;
+                const deltaY = Math.abs(e.changedTouches[0].clientY - startY);
+                
+                if (deltaX > threshold && deltaX > deltaY) {
+                    window.history.back();  // 触发返回
+                }
+            }
+        });
+
+        // 禁止双指缩放
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
+
+        // 禁���击缩放
+        document.addEventListener('dblclick', function(e) {
+            e.preventDefault();
+        });
+
+        // 处理 iOS 橡皮筋效果
+        document.body.addEventListener('touchmove', function(e) {
+            if(e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // 添加视口高度调整
+        function adjustViewport() {
+            let vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+
+        // 监听窗口大小变化和方向变化
+        window.addEventListener('resize', adjustViewport);
+        window.addEventListener('orientationchange', adjustViewport);
+
+        // 初始调用
+        adjustViewport();
+
+        // 在现有的 script 标签中添加以下代码
+        document.addEventListener('DOMContentLoaded', function() {
+            // 公告点击事件
+            const noticeItems = document.querySelectorAll('.notice-item');
+            noticeItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    showNoticeModal(item.textContent);
+                });
+            });
+
+            // 鼠标悬停时暂不滚动
+            const noticeWrapper = document.querySelector('.notice-wrapper');
+            noticeWrapper.addEventListener('mouseenter', () => {
+                noticeWrapper.style.animationPlayState = 'paused';
+            });
+
+            noticeWrapper.addEventListener('mouseleave', () => {
+                noticeWrapper.style.animationPlayState = 'running';
+            });
+        });
+
+        // 修改公告详情函数
+        function showNoticeModal(title) {
+            // 根据标题显示不同的内容
+            let content = '';
+            switch(title) {
+                case '《陪玩注意事���》':
+                    content = `
+                        <div class="notice-content-item">
+                            <h4>陪玩服务注意事项���</h4>
+                            <p>1. 陪玩服务仅限于公共场所进行，禁止在私密场所进行服务</p>
+                            <p>2. 禁止进行任何违法违规的活动</p>
+                            <p>3. 保持良��的沟通礼仪，互相尊重</p>
+                            <p>4. 如不适当的要求，陪玩人员有权拒绝服务</p>
+                            <p>5. 服务过�����中注意人身安全，保管好随身物品</p>
+                            <p>6. 如遇纠纷请及时联系平台客服处理</p>
+                        </div>
+                    `;
+                    break;
+                case '《私自下单声明》':
+                    content = `
+                        <div class="notice-content-item">
+                            <h4>私自下单免责声明：</h4>
+                            <p>1. 请务必通过平台进行下单交易</p>
+                            <p>2. 私自下单产生的任何损失，趣玩平台概不负责</p>
+                            <p>3. 平台不对私下交易的服务质量进行保证</p>
+                            <p>4. 私下交易造成的财产损失，平台不承担任何赔偿责任</p>
+                            <p>5. 为保障您的��益，请严格遵守平台规则</p>
+                        </div>
+                    `;
+                    break;
+                case '《下单陪玩须知》':
+                    content = `
+                        <div class="notice-content-item">
+                            <h4>下单须知：</h4>
+                            <p>1. 下单前请仔细确认：</p>
+                            <ul>
+                                <li>陪玩人员信息</li>
+                                <li>具体出行日期</li>
+                                <li>陪玩服务时间</li>
+                            </ul>
+                            <p>2. 退款规则：</p>
+                            <ul>
+                                <li>距离陪玩时间<span style="color: #FF6B6B;">7-5天</span>：退款<span style="color: #FF6B6B;">90%</span></li>
+                                <li>距离陪玩时间<span style="color: #FF6B6B;">4-2天</span>：退款<span style="color: #FF6B6B;">70%</span></li>
+                                <li>距离陪玩时间<span style="color: #FF6B6B;">3-1天</span>：退款<span style="color: #FF6B6B;">50%</span></li>
+                                <li>距离陪玩时间剩余8小时内：退款<span style="color: #FF6B6B;">10%</span></li>
+                                <li>服务开始后：不支持退款</li>
+                            </ul>
+                            <p>3. ����别说明：</p>
+                            <ul>
+                                <li>如因个人原因导致服务无法正常进行</li>
+                                <li>已超过服务时间则无法退款</li>
+                                <li>建议提前5分钟到达约定地点</li>
+                                <li>退款金额将在1-3个工作日内退回支付账户</li>
+                            </ul>
+                        </div>
+                    `;
+                    break;
+            }
+
+            const modal = document.createElement('div');
+            modal.className = 'notice-modal';
+            modal.innerHTML = `
+                <div class="notice-modal-content">
+                    <div class="notice-modal-title">${title}</div>
+                    <div class="notice-modal-body">${content}</div>
+                    <div class="notice-modal-close">
+                        <button class="notice-modal-button" onclick="closeNoticeModal(this)">我知道了</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            setTimeout(() => modal.classList.add('show'), 10);
+        }
+
+        // 关闭公���详情弹窗
+        function closeNoticeModal(button) {
+            const modal = button.closest('.notice-modal');
+            modal.classList.remove('show');
+            setTimeout(() => modal.remove(), 300);
+        }
+
+        // 修改轮播图相关代码，重命名变量避免冲突
+        let bannerSlideIndex = 0;
+        const bannerWrapper = document.getElementById('bannerWrapper');
+        const bannerDots = document.querySelectorAll('.dot');
+
+        function updateBannerSlide() {
+            bannerWrapper.style.transform = `translateX(-${bannerSlideIndex * 50}%)`;
+            bannerDots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === bannerSlideIndex);
+            });
+        }
+
+        function nextBannerSlide() {
+            bannerSlideIndex = (bannerSlideIndex + 1) % 2;
+            updateBannerSlide();
+        }
+
+        // 自动轮播
+        let bannerInterval = setInterval(nextBannerSlide, 3000);
+
+        // 点击指���器切换轮播图
+        bannerDots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                bannerSlideIndex = index;
+                updateBannerSlide();
+                // 重置自动播放计时器
+                clearInterval(bannerInterval);
+                bannerInterval = setInterval(nextBannerSlide, 3000);
+            });
+        });
+
+        // 触摸事件处理
+        let bannerStartX = 0;
+        let isBannerDragging = false;
+
+        bannerWrapper.addEventListener('touchstart', (e) => {
+            bannerStartX = e.touches[0].clientX;
+            isBannerDragging = true;
+            clearInterval(bannerInterval);
+        });
+
+        bannerWrapper.addEventListener('touchmove', (e) => {
+            if (!isBannerDragging) return;
+            const currentX = e.touches[0].clientX;
+            const diff = bannerStartX - currentX;
+            const translate = -(bannerSlideIndex * 50) - (diff / bannerWrapper.offsetWidth * 50);
+            bannerWrapper.style.transform = `translateX(${translate}%)`;
+        });
+
+        bannerWrapper.addEventListener('touchend', (e) => {
+            if (!isBannerDragging) return;
+            isBannerDragging = false;
+            const diff = bannerStartX - e.changedTouches[0].clientX;
+            if (Math.abs(diff) > 50) {
+                bannerSlideIndex = diff > 0 ? Math.min(bannerSlideIndex + 1, 1) : Math.max(bannerSlideIndex - 1, 0);
+            }
+            updateBannerSlide();
+            bannerInterval = setInterval(nextBannerSlide, 3000);
+        });
+
+        // 修改商品点击事件处理函数
+        function handleProductClick(product) {
+            // 获取基本信息
+            const basicInfo = product.querySelectorAll('.basic-info span');
+            const tags = product.querySelectorAll('.product-tags .tag');
+            
+            // 保存商品信息到 localStorage
+            const productInfo = {
+                id: product.dataset.id,
+                name: product.querySelector('.product-name').textContent,
+                age: basicInfo[0].textContent,
+                height: basicInfo[1].textContent,
+                personality: basicInfo[2].textContent,
+                location: product.querySelector('.tag.location').textContent,
+                service: product.querySelector('.tag.service').textContent,
+                price: product.querySelector('.product-price').textContent,
+                image: product.querySelector('.product-image img').src,
+                // 添加服务详情内容
+                serviceDetails: getServiceDetails(product.querySelector('.tag.service').textContent),
+                // 添加�������详��
+                priceDetails: getPriceDetails(product.querySelector('.tag.service').textContent)
+            };
+            
+            localStorage.setItem('selectedProduct', JSON.stringify(productInfo));
+            window.location.href = 'product-detail.html';
+        }
+
+        // 根据服务类型获取服务详情
+        function getServiceDetails(serviceType) {
+            const details = {
+                '酒吧狂欢': '陪玩前往酒吧，陪伴您在��吧内享受欢��时光，让您的夜生活更加精彩。',
+                '欢唱派对': '陪同前往KTV，提供歌唱陪伴服务，一起享受音乐的快乐。',
+                '逛街电影': '陪同购物或观影，提供购物建议或共同欣赏电影，分享观后感。',
+                '商���应酬': '陪同参加商务宴请，具备�����好的社交礼���，帮助您维护商务关系。',
+                '剧本杀': '陪同参与剧本杀游戏，共同破解谜题，体验沉浸式剧情。',
+                '密室逃脱': '陪同挑战密室逃脱，共同解密，体验紧张刺激的逃脱过程。',
+                '桌球助教': '提供桌球指��和陪练服务，帮助提升您的桌球技巧。'
+            };
+            return details[serviceType] || '提供专业的陪玩服务，让您的娱乐时光更加愉快。';
+        }
+
+        // 根据服务类型获取价格详��
+        function getPriceDetails(serviceType) {
+            const prices = {
+                '酒吧狂欢': 298,
+                '欢唱派对': 268,
+                '逛街电影': 198,
+                '商务应酬': 298,
+                '剧本杀': 128,
+                '密室逃脱': 128,
+                '桌球助教': 128,
+                '同城游': 268,    // 修改为 268/小时
+                '跨市游': 998,    // 修改为 998/天
+                '跨省游': 1288,   // 修改为 1288/天
+                '国际游': 1588    // 修改为 1588/天
+            };
+            return prices[serviceType] || 128;
+        }
+
+        // 为每个商���项加点击事件
+        document.querySelectorAll('.product-item').forEach((item, index) => {
+            // 添加一ID
+            item.dataset.id = `product-${index + 1}`;
+            
+            // 添加点击事件
+            item.addEventListener('click', () => handleProductClick(item));
+        });
+
+        // 修改分类切换逻辑
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始���指示器位置
+            function updateIndicator(tab) {
+                const indicator = document.querySelector('.tab-indicator');
+                const tabWidth = tab.offsetWidth;
+                const indicatorWidth = 20;
+                const leftPosition = tab.offsetLeft + (tabWidth - indicatorWidth) / 2;
+                indicator.style.transform = `translateX(${leftPosition}px)`;
+            }
+
+            // 为所有���务选项添加���击事件
+            function initializeServiceOptions() {
+                document.querySelectorAll('.service-options .option-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        // 获取当前选项所属的服务类型容器
+                        const parent = item.closest('.options-scroll');
+                        // 移除同组中其他选项的active类
+                        parent.querySelectorAll('.option-item').forEach(i => i.classList.remove('active'));
+                        // 添加active类到当前点击的选项
+                        item.classList.add('active');
+                        // 更新价格显示
+                        updatePrice();
+                        // 更新温���提示
+                        updateTips(item.textContent);
+                        // 重置服��时长
+                        document.getElementById('selectedDuration').textContent = '服务时长';
+                        document.getElementById('selectedDuration').parentElement.classList.remove('selected');
+                    });
+                });
+            }
+
+            // 分类切换事件
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // 移除所有active类
+                    document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+                    // 添加active类到当前点击的标签
+                    tab.classList.add('active');
+                    
+                    const category = tab.dataset.category;
+                    const entertainmentOptions = document.getElementById('entertainmentOptions');
+                    const travelOptions = document.getElementById('travelOptions');
+                    const serviceTimeItem = document.querySelector('.service-time-item');
+                    
+                    if (category === 'entertainment') {
+                        entertainmentOptions.style.display = 'block';
+                        travelOptions.style.display = 'none';
+                        // 修改为服务时间（时分）
+                        serviceTimeItem.innerHTML = `
+                            <i class="material-icons">access_time</i>
+                            <span class="filter-text" id="selectedTime">服务时间</span>
+                            <i class="material-icons arrow">keyboard_arrow_down</i>
+                        `;
+                        serviceTimeItem.onclick = () => showTimeSelect(); // 使用统一的时间选择函数
+                    } else {
+                        entertainmentOptions.style.display = 'none';
+                        travelOptions.style.display = 'block';
+                        // 修改为服务时间（月日）
+                        serviceTimeItem.innerHTML = `
+                            <i class="material-icons">access_time</i>
+                            <span class="filter-text" id="selectedTime">服务时间</span>
+                            <i class="material-icons arrow">keyboard_arrow_down</i>
+                        `;
+                        serviceTimeItem.onclick = () => showTimeSelect(); // 使用统一的���间选择函数
+                    }
+                    
+                    // 重置筛选选项
+                    resetFilterOptions();
+                    // 更新价格显示
+                    updatePrice();
+                    // 更新温馨提示
+                    updateTips();
+                });
+            });
+
+            // 初始化页面
+            const initialTab = document.querySelector('.category-tab.active');
+            if (initialTab) {
+                updateIndicator(initialTab);
+            }
+            
+            // 初始化所有服务选项的点击事件
+            initializeServiceOptions();
+        });
+
+        // 修改重置筛选选项函数
+        function resetFilterOptions() {
+            document.getElementById('selectedDestination').textContent = '选择目的地';
+            document.getElementById('selectedDate').textContent = '选择日期';
+            document.getElementById('selectedGender').textContent = '选择性别';
+            document.getElementById('selectedDuration').textContent = '服务时长';
+            document.getElementById('selectedTime').textContent = document.querySelector('.category-tab.active').dataset.category === 'entertainment' ? '服务时间' : '返程日期';
+            document.getElementById('selectedBooker').textContent = '预订人';
+            document.getElementById('selectedPhone').textContent = '预定手机号';
+            
+            // 移除所有选中状态
+            document.querySelectorAll('.filter-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+        }
+
+        // 修改选项点击事件
+        document.querySelectorAll('.option-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const parent = item.closest('.options-scroll');
+                parent.querySelectorAll('.option-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                updatePrice();
+                updateTips(item.textContent);
+            });
+        });
+
+        // 修改目的地选择函数
+        function showDestinationSelect() {
+            const currentCategory = document.querySelector('.category-tab.active').dataset.category;
+            const currentService = document.querySelector('.service-options:not([style*="display: none"]) .option-item.active')?.textContent;
+            
+            // 根据不同��类和服务类��显示不同的目的地选项
+            let destinations = [];
+            
+            if (currentService === '国际游') {
+                // 国际游显示国际城市
+                destinations = [
+                    '中国香港', '中��澳门', '中国台湾',
+                    '泰国', '马来西亚', '新���坡', '越南',
+                    '菲律宾', '美国', '澳大利亚', '英国',
+                    '法国', '土耳其', '塞尔维亚'  // 新增国际目的地
+                ];
+            } else {
+                // 其他情况显示国内城市
+                destinations = [
+                    '北海', '昆明', '广州', '珠海', '海口', '三亚', 
+                    '六盘水', '毕节', '贵阳', '铜仁', '西安', '武汉', 
+                    '哈尔滨', '重庆', '长沙', '成都', '北京', '天津', 
+                    '上海', '杭州', '深圳', '南京',
+                    '新疆', '内蒙古'
+                ];
+            }
+
+            const modal = document.createElement('div');
+            modal.className = 'options-modal';
+            modal.innerHTML = `
+                <div class="options-content">
+                    <div class="options-header">
+                        <span>选择目的地</span>
+                        <i class="material-icons" onclick="this.closest('.options-modal').remove()">close</i>
+                    </div>
+                    <div class="options-list">
+                        ${destinations.map(city => `
+                            <div class="option" onclick="selectOption('selectedDestination', '${city}', this)">
+                                ${city}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // 修改选项选择函数，添加选择后的处理
+        function selectOption(targetId, value, element) {
+            const targetElement = document.getElementById(targetId);
+            targetElement.textContent = value;
+            targetElement.parentElement.classList.add('selected');
+            const modal = element.closest('.options-modal');
+            modal.remove();
+            
+            // 如果是选���目的地，可以添加额外的处理逻辑
+            if (targetId === 'selectedDestination') {
+                // 这里可以添加目的地选择后的特殊处理
+                console.log('Selected destination:', value);
+            }
+            
+            // 更新价格显示
+            if (targetId === 'selectedDuration') {
+                updatePrice();
+            }
+        }
+
+        // 修改日期选择函数，添加时间检查
+        function showDatePicker() {
+            const modal = document.createElement('div');
+            modal.className = 'options-modal';
+            
+            const now = new Date();
+            // 设置最小时间��当前时间后1小时
+            const minDate = new Date(now.getTime() + 60 * 60 * 1000);
+            const maxDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+            
+            modal.innerHTML = `
+                <div class="options-content">
+                    <div class="options-header">
+                        <span>选择陪玩日期</span>
+                        <i class="material-icons" onclick="this.closest('.options-modal').remove()">close</i>
+                    </div>
+                    <div class="date-picker">
+                        <input type="date" 
+                            min="${minDate.toISOString().split('T')[0]}"
+                            max="${maxDate.toISOString().split('T')[0]}"
+                            onchange="selectDate(this.value, this)"
+                            style="width: 100%; padding: 10px; margin: 10px 0;">
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // 修改日期选择处理函数，添加时间检查
+        function selectDate(value, element) {
+            const selectedDate = new Date(value);
+            const now = new Date();
+            
+            // 如果选择的时��早于当前时��后1小时，显示提示
+            if (selectedDate.getTime() < now.getTime() + 60 * 60 * 1000) {
+                showSweetAlert('请选择至少1小时后的时间', '⚠️');
+                return;
+            }
+            
+            const formattedDate = selectedDate.toLocaleDateString('zh-CN', {
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            const dateElement = document.getElementById('selectedDate');
+            dateElement.textContent = formattedDate;
+            dateElement.parentElement.classList.add('selected');
+            element.closest('.options-modal').remove();
+        }
+
+        // 修改确认预约函数
+        function confirmBooking(orderInfoStr) {
+            try {
+                // 解码并解析订单信息
+                const orderInfo = JSON.parse(decodeURIComponent(orderInfoStr));
+                
+                // 设置初始状态为"待预约"，陪玩信息为空
+                orderInfo.status = '待预约';
+                orderInfo.playerName = '';
+                orderInfo.playerId = '';
+                
+                // 保存订单信息
+                localStorage.setItem('currentOrder', JSON.stringify(orderInfo));
+                
+                // 关闭订单核对弹窗
+                document.querySelector('.booking-modal').remove();
+                
+                // 跳转到支付页面
+                window.location.href = 'payment.html';
+            } catch (e) {
+                console.error('解析订单信息失败:', e);
+            }
+        }
+
+        // 显示服协议
+        function showServiceAgreement() {
+            showNoticeModal('《服务协议》');
+        }
+
+        // 显示隐私政策
+        function showPrivacyPolicy() {
+            showNoticeModal('《隐私政策》');
+        }
+
+        // 生成订单号函数
+        function generateOrderId() {
+            // 生成4位随机大写字母
+            const letters = Array.from({length: 4}, () => 
+                String.fromCharCode(65 + Math.floor(Math.random() * 26))
+            ).join('');
+            
+            // 生成19位随机数字
+            const numbers = Array.from({length: 19}, () => 
+                Math.floor(Math.random() * 10)
+            ).join('');
+            
+            return `${letters}${numbers}`;
+        }
+
+        // 添加价格计算相关函数
+        function updatePrice() {
+            const currentCategory = document.querySelector('.category-tab.active').dataset.category;
+            const currentService = document.querySelector('.service-options:not([style*="display: none"]) .option-item.active')?.textContent;
+            const duration = document.getElementById('selectedDuration').textContent;
+            
+            // 获取基础单价
+            const basePrice = getServicePrice(currentService);
+            let totalPrice = 0;
+            let unitPriceText = '';
+            
+            if (currentCategory === 'entertainment' || currentService === '同城游') {
+                // 小时计
+                const hours = parseInt(duration) || 0;
+                totalPrice = basePrice * hours;
+                unitPriceText = `${basePrice}/小时 × ${hours || '--'}小时`;
+            } else {
+                // 天数费
+                const days = parseInt(duration) || 0;
+                totalPrice = basePrice * days;
+                unitPriceText = `${basePrice}/ × ${days || '--'}天`;
+            }
+            
+            // 更新显示
+            document.getElementById('unitPrice').textContent = unitPriceText;
+            document.getElementById('totalPrice').textContent = totalPrice ? `¥${totalPrice}` : '--';
+        }
+
+        // 修改获取服务价格函数
+        function getServicePrice(serviceType) {
+            const prices = {
+                '酒吧狂欢': 298,
+                '欢唱派对': 268,
+                '逛街电影': 198,
+                '商务应酬': 298,
+                '剧本杀': 128,
+                '密室逃脱': 128,
+                '桌球助教': 128,
+                '同城游': 268,    // 修���为 268/小时
+                '跨市游': 998,    // 修改为 998/天
+                '跨省游': 1288,   // 修改为 1288/天
+                '国际游': 1588    // 修改为 1588/天
+            };
+            return prices[serviceType] || 0;
+        }
+
+        // 修改服务时长选择函数
+        function showDurationSelect() {
+            const currentCategory = document.querySelector('.category-tab.active').dataset.category;
+            const currentService = document.querySelector('.service-options:not([style*="display: none"]) .option-item.active')?.textContent;
+            
+            if (!currentService) {
+                showSweetAlert('先选择服务型', '⚠️');
+                return;
+            }
+            
+            let durations = [];
+            let title = '选择服务时长';
+            
+            if (currentCategory === 'entertainment' || currentService === '同城游') {
+                // 小时制（1-24小时）
+                durations = Array.from({length: 24}, (_, i) => `${i + 1}小时`);
+            } else if (['跨市��', '跨省游', '国际游'].includes(currentService)) {
+                // 天数制（1-15天）
+                durations = Array.from({length: 15}, (_, i) => `${i + 1}天`);
+                title = '选择旅行天数';
+            }
+
+            const modal = document.createElement('div');
+            modal.className = 'options-modal';
+            modal.innerHTML = `
+                <div class="options-content">
+                    <div class="options-header">
+                        <span>${title}</span>
+                        <i class="material-icons" onclick="this.closest('.options-modal').remove()">close</i>
+                    </div>
+                    <div class="options-list">
+                        ${durations.map(duration => `
+                            <div class="option" onclick="selectOption('selectedDuration', '${duration}', this)">
+                                ${duration}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // 修改旅游陪玩选项的HTML
+        document.querySelector('#travelOptions .options-scroll').innerHTML = `
+            <div class="option-item active">同城游</div>
+            <div class="option-item">跨市游</div>
+            <div class="option-item">跨省游</div>
+            <div class="option-item">国际游</div>
+        `;
+
+        // 修改服务类型对应的温馨提示
+        const serviceTips = {
+            '酒吧狂欢': ['快乐酒局，请勿贪杯', '陪玩人员仅提供酒吧场所内的服务', '无法提供其他的服务'],
+            '欢唱派': ['天籁之音，包厢文化', '陪玩人员仅提供KTV场所内的服务', '无法提供其他的服务'],
+            '剧本杀': ['剧本推理，角色扮演', '陪玩人员仅提供剧本杀场所内的服务', '无法提供其他的服务'],
+            '密室逃脱': ['解密探险，欢乐逃脱', '陪玩人员仅提供密室场所内的服务', '无法提供其他的服务'],
+            '桌球助教': ['台球技巧，一对一指导', '陪玩人员仅提供桌球场所内的服务', '无法提供其他的服务'],
+            '商务应酬': ['专业社交礼仪得体', '陪玩人员仅提供商务场所内的服务', '无法提供他的服务'],
+            '逛街电影': ['休闲娱乐，轻松自在', '陪玩人员仅提供公共场所内的服务', '无法提供其他的服务'],
+            '同城游': ['本地探索，趣味行', '陪玩人员仅提供同城公共场所内的服务', '无法提供其他的服务'],
+            '跨市游': ['城市探索，精彩旅程', '陪玩人员仅提供跨市公共场所内的服务', '无法提供其他的服务'],
+            '跨省游': ['省际旅行，精彩纷呈', '陪玩人员仅提供跨省公共场所内的服务', '无提供其他的服务'],
+            '国际游': ['环球之旅，独特体验', '陪玩人员仅提供国际公共场所内的服务', '无法提供其他的服务']
+        };
+
+        // 更新温馨提示
+        function updateTips(serviceType) {
+            const tips = serviceTips[serviceType] || [];
+            const tipsContent = document.getElementById('tipsContent');
+            tipsContent.innerHTML = tips.map(tip => `<div class="tip-item">${tip}</div>`).join('');
+        }
+
+        // 确保页面加载时显示默认选中服务的提示
+        document.addEventListener('DOMContentLoaded', function() {
+            const defaultService = document.querySelector('.option-item.active');
+            if (defaultService) {
+                updateTips(defaultService.textContent);
+            }
+        });
+
+        // 修改温馨提示的内容
+        const categoryTips = {
+            // 娱乐陪玩的提示
+            entertainment: {
+                '剧���杀': [
+                    '剧��杀陪玩出行后30分钟内提供免费更换陪玩人员',
+                    '仅提供剧本杀游戏的服务，无法提供其他服务',
+                    '如需加时请提前至少30分钟联���客服',
+                    '如遇过分需求时，陪玩人员有权拒绝服务',
+                    '预定价格仅��含陪玩人员的服务费，不车费'
+                ],
+                '酒吧狂欢': [
+                    '酒吧陪玩出行后30分钟内提供免费更换陪玩人员',
+                    '仅提供酒吧内的娱乐服务，无法提供其他务',
+                    '如需加时请提前至少30分钟联系客服',
+                    '如遇过分需求时，陪玩人员有权拒绝服务',
+                    '预定价格仅包含陪玩人员的服务费，不含车费'
+                ],
+                '欢唱派对': [
+                    'KTV陪玩出行后30分钟内提供免费更换陪玩人员',
+                    '仅提供KTV内娱乐的服务，无法提供其他服务',
+                    '如需加时请提前至少30分钟联系客服',
+                    '如遇过分需求时，陪玩人员有权拒绝服务',
+                    '预定价格仅包含陪玩人员的服务费，不含车费'
+                ],
+                '桌球助教': [
+                    '助教出行后30分钟内提供免费更换陪玩人员',
+                    '仅提供桌球的教练和陪玩服务，无法提供其他服务',
+                    '如需加时请提前至少30分钟联系客服',
+                    '如遇过分需求时，陪玩人员有权拒绝服务',
+                    '预定价格仅包含陪玩人员的服务费，不含车费'
+                ],
+                '商务应酬': [
+                    '应酬陪玩出行后30分钟内提供免费更换陪玩人员',
+                    '仅提供饭局/宵夜局的活动，无法提供其他服务',
+                    '如需加时请提前至少30分钟联系客服',
+                    '如遇过分需求时，陪玩人员有权拒绝服务',
+                    '预定价格仅包含陪玩人员的服务费，不含车费'
+                ],
+                '逛街电影': [
+                    '陪玩出行后30分内提供免费更换陪玩人员',
+                    '仅提供逛街/看电影的活，无法提供其他服务',
+                    '如需加时请提前至少30分钟联系客服',
+                    '如遇过分需求时，陪玩人员有权拒绝服务',
+                    '仅提供公众影院的服务，无法提供私人影院服务',
+                    '预定价格仅包含陪玩人员的服务费，不含车费'
+                ],
+                '密室逃脱': [
+                    '陪玩出行后30分钟内提供免费更换陪玩人员',
+                    '仅提供密室逃脱的服务，无法提供其他服务',
+                    '如需加时请提前至少30分钟���客服',
+                    '如遇过分需求时，陪玩人员有权拒绝服务',
+                    '预定价格仅包含陪玩人员的服务费，不含车费'
+                ]
+            },
+            // 旅游陪玩的提示
+            travel: {
+                '同城游': [
+                    '同城游的价格不包含陪玩人员的交通费用',
+                    '城游在出行后30分钟内提供费更换陪玩人员',
+                    '仅提供旅游服务，无法提供其他服务'
+                ],
+                '市游': [
+                    '跨市游的价格不包含陪玩人员的交通/酒店费用',
+                    '跨市游在出行前确认了陪玩后无法申请退款',
+                    '仅提供旅游服务，无法提供其他服务'
+                ],
+                '跨省游': [
+                    '跨省游的价格不包含陪玩人员的交通/酒店费用',
+                    '跨省游在出行前确认了陪玩后无法申请退款',
+                    '仅提供旅游服务，无法提供其他服务'
+                ],
+                '国际游': [
+                    '出国游请您切勿从违法犯罪活动',
+                    '出国游请您遵守当地法律法规',
+                    '出国游不包含往返机票/酒店/景点门票',
+                    '出国游时，请您务必提供往返机票和酒店的订单截图',
+                    '出国游无法改签及延后',
+                    '出国游不包含陪玩人员的签证费',
+                    '如陪玩人员签证被拒的情况下，可重新更换陪玩或退款'
+                ]
+            }
+        };
+
+        // 修改更新温馨提示的函数
+        function updateTips() {
+            const currentCategory = document.querySelector('.category-tab.active').dataset.category;
+            const currentService = document.querySelector('.service-options:not([style*="display: none"]) .option-item.active')?.textContent;
+            
+            let tips = [];
+            
+            if (currentCategory === 'entertainment') {
+                tips = categoryTips.entertainment[currentService] || [];
+            } else if (currentCategory === 'travel') {
+                tips = categoryTips.travel[currentService] || [];
+            }
+            
+            const tipsContent = document.getElementById('tipsContent');
+            tipsContent.innerHTML = tips.map(tip => `<div class="tip-item">${tip}</div>`).join('');
+        }
+
+        // 修改分类切换事件中的提示更新
+        document.querySelectorAll('.category-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // ... 其他代码保持不变 ...
+                
+                // 更新温馨提示
+                updateTips();
+                
+                // ... 其他代码保持不变 ...
+            });
+        });
+
+        // 确保页面加载时显示默认分类的示
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTips();
+        });
+
+        // 修改时间选择函数
+        function showTimeSelect() {
+            const currentCategory = document.querySelector('.category-tab.active').dataset.category;
+            
+            if (currentCategory === 'entertainment') {
+                // 娱乐陪玩使用时分选择
+                const modal = document.createElement('div');
+                modal.className = 'options-modal';
+                modal.innerHTML = `
+                    <div class="options-content">
+                        <div class="options-header">
+                            <span>选择服务时间</span>
+                            <i class="material-icons" onclick="this.closest('.options-modal').remove()">close</i>
+                        </div>
+                        <div class="time-picker" style="padding: 15px;">
+                            <div class="time-select" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                                <select id="hourSelect" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #eee; font-size: 14px; color: #333;">
+                                    ${Array.from({length: 24}, (_, i) => 
+                                        `<option value="${i.toString().padStart(2, '0')}">${i.toString().padStart(2, '0')}时</option>`
+                                    ).join('')}
+                                </select>
+                                <select id="minuteSelect" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #eee; font-size: 14px; color: #333;">
+                                    ${Array.from({length: 12}, (_, i) => 
+                                        `<option value="${(i * 5).toString().padStart(2, '0')}">${(i * 5).toString().padStart(2, '0')}分</option>`
+                                    ).join('')}
+                                </select>
+                            </div>
+                            <button class="confirm-time-btn" style="width: 100%; padding: 12px; background: #FF6B6B; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;" onclick="confirmTime()">确定</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            } else {
+                // 旅游陪玩使用月日选择
+                const now = new Date();
+                const currentMonth = now.getMonth() + 1;
+                const currentDay = now.getDate();
+
+                const modal = document.createElement('div');
+                modal.className = 'options-modal';
+                modal.innerHTML = `
+                    <div class="options-content">
+                        <div class="options-header">
+                            <span>选择服务时间</span>
+                            <i class="material-icons" onclick="this.closest('.options-modal').remove()">close</i>
+                        </div>
+                        <div class="time-picker" style="padding: 15px;">
+                            <div class="time-select" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                                <select id="monthSelect" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #eee; font-size: 14px; color: #333;">
+                                    ${Array.from({length: 12}, (_, i) => {
+                                        const month = i + 1;
+                                        return `<option value="${month.toString().padStart(2, '0')}" 
+                                            ${month === currentMonth ? 'selected' : ''}>
+                                            ${month}月
+                                        </option>`;
+                                    }).join('')}
+                                </select>
+                                <select id="daySelect" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #eee; font-size: 14px; color: #333;">
+                                    ${Array.from({length: 31}, (_, i) => {
+                                        const day = i + 1;
+                                        return `<option value="${day.toString().padStart(2, '0')}" 
+                                            ${day === currentDay ? 'selected' : ''}>
+                                            ${day}日
+                                        </option>`;
+                                    }).join('')}
+                                </select>
+                            </div>
+                            <button class="confirm-time-btn" style="width: 100%; padding: 12px; background: #FF6B6B; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;" onclick="confirmTime()">确定</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+        }
+
+        // 修改确认时间函数
+        function confirmTime() {
+            const currentCategory = document.querySelector('.category-tab.active').dataset.category;
+            let timeText;
+            
+            if (currentCategory === 'entertainment') {
+                const hour = document.getElementById('hourSelect').value;
+                const minute = document.getElementById('minuteSelect').value;
+                timeText = `${hour}:${minute}`;
+            } else {
+                const month = document.getElementById('monthSelect').value;
+                const day = document.getElementById('daySelect').value;
+                timeText = `${month}月${day}日`;
+            }
+            
+            document.getElementById('selectedTime').textContent = timeText;
+            document.getElementById('selectedTime').parentElement.classList.add('selected');
+            document.querySelector('.options-modal').remove();
+        }
+
+        // 修改性别选择函数
+        function showGenderSelect() {
+            const modal = document.createElement('div');
+            modal.className = 'options-modal';
+            modal.innerHTML = `
+                <div class="options-content">
+                    <div class="options-header">
+                        <span>选择性别</span>
+                        <i class="material-icons" onclick="this.closest('.options-modal').remove()">close</i>
+                    </div>
+                    <div class="options-list">
+                        <div class="option" onclick="selectOption('selectedGender', '不限', this)">不限</div>
+                        <div class="option" onclick="selectOption('selectedGender', '男', this)">男</div>
+                        <div class="option" onclick="selectOption('selectedGender', '女', this)">女</div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // 添加返程日期选择函数
+        function showReturnDatePicker() {
+            // 删除整个函数
+        }
+
+        // 添加返程日选择处理函数
+        function selectReturnDate(value, element) {
+            // 删除整个函数
+        }
+
+        // 修改改签确认处理函数
+        function handleRebookConfirm(orderInfo) {
+            // 创建改签确认弹窗
+            const confirmModal = document.createElement('div');
+            confirmModal.className = 'booking-modal';
+            confirmModal.innerHTML = `
+                <div class="booking-content">
+                    <h3>
+                        <i class="material-icons" style="color: #FF6B6B;">info</i>
+                        改签确认
+                    </h3>
+                    <div class="booking-details">
+                        <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+                            <div style="font-size: 14px; color: #666; margin-bottom: 10px;">原订单信息</div>
+                            <div class="detail-item">
+                                <span class="label">订单号：</span>
+                                <span class="value">${orderInfo.originalOrderId}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">服务项目：</span>
+                                <span class="value">${orderInfo.service}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">预约地点</span>
+                                <span class="value">${orderInfo.destination}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">预约日期：</span>
+                                <span class="value">${orderInfo.date}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">服务时间：</span>
+                                <span class="value">${orderInfo.serviceTime}</span>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <div style="font-size: 14px; color: #666; margin-bottom: 10px;">改签后信息：</div>
+                            <div class="detail-item">
+                                <span class="label">新订单号：</span>
+                                <span class="value">${orderInfo.orderId}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">服务项目：</span>
+                                <span class="value">${orderInfo.service}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">预约地点：</span>
+                                <span class="value">${orderInfo.destination}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">预约日期：</span>
+                                <span class="value">${orderInfo.date}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">服务时间：</span>
+                                <span class="value">${orderInfo.serviceTime}</span>
+                            </div>
+                            <div class="detail-item" style="margin-top: 10px; color: #FF6B6B;">
+                                <span class="label">改签费用：</span>
+                                <span class="value">¥${orderInfo.rebookFee}</span>
+                            </div>
+                        </div>
+                        <div style="font-size: 12px; color: #999; text-align: center; margin-bottom: 15px;">
+                            请确认以上改签信息
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="this.closest('.booking-modal').remove()" 
+                                style="flex: 1; padding: 10px; border: 1px solid #eee; background: #fff; border-radius: 8px; color: #666; cursor: pointer;">
+                            取消
+                        </button>
+                        <button onclick="confirmRebook(${JSON.stringify(orderInfo)})" 
+                                style="flex: 1; padding: 10px; border: none; background: #FF6B6B; border-radius: 8px; color: #fff; cursor: pointer;">
+                            确认改签
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(confirmModal);
+        }
+
+        // 添加最终确认改签函数
+        function confirmRebook(orderInfo) {
+            // 关闭确认弹窗
+            document.querySelector('.booking-modal').remove();
+
+            // 根是否需要支付改签费用决定下一步操作
+            if (orderInfo.needPayment) {
+                // 需要支付改签费用，跳转到支付页面
+                window.location.href = 'payment.html';
+            } else {
+                // 不需要支付改签费用，显示改签成功提示
+                document.head.insertAdjacentHTML('beforeend', successStyle);
+                const successAlert = document.createElement('div');
+                successAlert.className = 'rebook-success-alert';
+                successAlert.innerHTML = `
+                    <div class="rebook-success-header">
+                        <i class="material-icons rebook-success-icon">check_circle</i>
+                        <div class="rebook-success-title">改签成功</div>
+                    </div>
+                    <div class="auto-close-tip">3秒后自动跳转...</div>
+                `;
+                document.body.appendChild(successAlert);
+
+                // 3秒后自动跳转
+                setTimeout(() => {
+                    window.location.href = 'rebook-success.html';
+                }, 3000);
+            }
+        }
+
+        // 修改改签按钮点击处理函数
+        function handleRebook(originalOrder) {
+            // 创建改签确认弹窗
+            const confirmModal = document.createElement('div');
+            confirmModal.className = 'booking-modal';
+            confirmModal.innerHTML = `
+                <div class="booking-content">
+                    <h3>
+                        <i class="material-icons" style="color: #FF6B6B;">info</i>
+                        改签确认
+                    </h3>
+                    <div class="booking-details">
+                        <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+                            <div style="font-size: 14px; color: #666; margin-bottom: 10px;">原订单信息：</div>
+                            <div class="detail-item">
+                                <span class="label">订单号：</span>
+                                <span class="value">${originalOrder.orderId}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">服务项目：</span>
+                                <span class="value">${originalOrder.service}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">预约地点：</span>
+                                <span class="value">${originalOrder.destination}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">预约日期：</span>
+                                <span class="value">${originalOrder.date}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">服务时间：</span>
+                                <span class="value">${originalOrder.serviceTime}</span>
+                            </div>
+                        </div>
+                        <div style="font-size: 12px; color: #999; text-align: center; margin-bottom: 15px;">
+                            请确认是否改签此订单？
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="this.closest('.booking-modal').remove()" 
+                                style="flex: 1; padding: 10px; border: 1px solid #eee; background: #fff; border-radius: 8px; color: #666; cursor: pointer;">
+                            取��
+                        </button>
+                        <button onclick="startRebook(${JSON.stringify(originalOrder)})" 
+                                style="flex: 1; padding: 10px; border: none; background: #FF6B6B; border-radius: 8px; color: #fff; cursor: pointer;">
+                            确认改签
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(confirmModal);
+        }
+
+        // 添加开始改签函
+        function startRebook(originalOrder) {
+            // 保存原订单信息到本存储
+            localStorage.setItem('currentOrder', JSON.stringify(originalOrder));
+            // 关闭确认弹窗
+            document.querySelector('.booking-modal').remove();
+            // 跳转到改签页面
+            window.location.href = 'chengshipeiwan.html';
+        }
+
+        // 显示预订人输入弹窗
+        function showBookerInput() {
+            const modal = document.createElement('div');
+            modal.className = 'options-modal';
+            modal.innerHTML = `
+                <div class="options-content">
+                    <div class="options-header">
+                        <span>输入预订人姓名</span>
+                        <i class="material-icons" onclick="this.closest('.options-modal').remove()">close</i>
+                    </div>
+                    <div style="padding: 15px;">
+                        <input type="text" 
+                            id="bookerInput" 
+                            placeholder="输入预订人姓名" 
+                            style="width: 100%; padding: 12px; border: 1px solid #eee; border-radius: 8px; font-size: 14px; margin-bottom: 15px;">
+                        <button onclick="confirmBooker()" 
+                            style="width: 100%; padding: 12px; background: #FF6B6B; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">
+                            确定
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // 确认预订人
+        function confirmBooker() {
+            const bookerInput = document.getElementById('bookerInput');
+            const bookerName = bookerInput.value.trim();
+            
+            if (!bookerName) {
+                showSweetAlert('请输入预订人姓名', '⚠️');
+                return;
+            }
+            
+            document.getElementById('selectedBooker').textContent = bookerName;
+            document.getElementById('selectedBooker').parentElement.classList.add('selected');
+            document.querySelector('.options-modal').remove();
+        }
+
+        // 显示手机号输入弹窗
+        function showPhoneInput() {
+            const modal = document.createElement('div');
+            modal.className = 'options-modal';
+            modal.innerHTML = `
+                <div class="options-content">
+                    <div class="options-header">
+                        <span>输入预定手机号</span>
+                        <i class="material-icons" onclick="this.closest('.options-modal').remove()">close</i>
+                    </div>
+                    <div style="padding: 15px;">
+                        <input type="tel" 
+                            id="phoneInput" 
+                            placeholder="请输入手机号" 
+                            maxlength="11"
+                            style="width: 100%; padding: 12px; border: 1px solid #eee; border-radius: 8px; font-size: 14px; margin-bottom: 15px;">
+                        <button onclick="confirmPhone()" 
+                            style="width: 100%; padding: 12px; background: #FF6B6B; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">
+                            确定
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            // 添加手机号输入限制
+            const phoneInput = document.getElementById('phoneInput');
+            phoneInput.addEventListener('input', function(e) {
+                this.value = this.value.replace(/\D/g, '');
+            });
+        }
+
+        // 确认手机号
+        function confirmPhone() {
+            const phoneInput = document.getElementById('phoneInput');
+            const phoneNumber = phoneInput.value.trim();
+            
+            if (!phoneNumber) {
+                showSweetAlert('请输入手机号', '⚠️');
+                return;
+            }
+            
+            if (!/^1[3-9]\d{9}$/.test(phoneNumber)) {
+                showSweetAlert('请输入正确的手机��', '⚠️');
+                return;
+            }
+            
+            document.getElementById('selectedPhone').textContent = phoneNumber;
+            document.getElementById('selectedPhone').parentElement.classList.add('selected');
+            document.querySelector('.options-modal').remove();
+        }
+
+        // 在页面加载时检查是否已选择陪玩
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentOrder = JSON.parse(localStorage.getItem('currentOrder'));
+            const playerNameDisplay = document.getElementById('playerNameDisplay');
+            
+            if (currentOrder && currentOrder.playerName && currentOrder.playerName !== '选择陪玩_') {
+                // 如果已选择陪玩，显示陪玩昵称
+                playerNameDisplay.textContent = currentOrder.playerName;
+                playerNameDisplay.style.color = '#333'; // 改变颜色为普通文本色
+                playerNameDisplay.style.cursor = 'default';
+                playerNameDisplay.removeAttribute('href'); // 移除链接
+            } else {
+                // 如果未选择陪玩，显示"选择陪玩"按钮
+                playerNameDisplay.textContent = '选择陪���';
+                playerNameDisplay.style.color = '#FF6B6B';
+                playerNameDisplay.style.cursor = 'pointer';
+                playerNameDisplay.href = 'select-player.html';
+            }
+        });
+
+        // 修改预约按钮处理函数
+        function handleBooking() {
+            const currentService = document.querySelector('.service-options:not([style*="display: none"]) .option-item.active')?.textContent;
+            const destination = document.getElementById('selectedDestination').textContent;
+            const dateText = document.getElementById('selectedDate').textContent;
+            const gender = document.getElementById('selectedGender').textContent;
+            const duration = document.getElementById('selectedDuration').textContent;
+            const totalPrice = document.getElementById('totalPrice').textContent;
+            const serviceTime = document.getElementById('selectedTime').textContent;
+            const booker = document.getElementById('selectedBooker').textContent;
+            const phone = document.getElementById('selectedPhone').textContent;
+            
+            // 检查是否所有必填项都已选择
+            if (!currentService || currentService === '') {
+                showSweetAlert('请选择服务类型', '⚠️');
+                return;
+            }
+            if (destination === '选择目的地') {
+                showSweetAlert('请选择目的地', '⚠️');
+                return;
+            }
+            if (dateText === '选择日期') {
+                showSweetAlert('请选择日期', '⚠️');
+                return;
+            }
+            if (gender === '选择性别') {
+                showSweetAlert('请选择性别', '⚠️');
+                return;
+            }
+            if (duration === '服务时长') {
+                showSweetAlert('请选择服务时长', '⚠️');
+                return;
+            }
+            if (serviceTime === '服务时间') {
+                showSweetAlert('请选择服务时间', '⚠️');
+                return;
+            }
+            if (booker === '预订人') {
+                showSweetAlert('请输入预订人姓名', '⚠️');
+                return;
+            }
+            if (phone === '预定手机号') {
+                showSweetAlert('请输入预定手机号', '⚠️');
+                return;
+            }
+
+            // 创建订单信息
+            const orderInfo = {
+                orderId: generateOrderId(),
+                service: currentService,
+                destination: destination,
+                date: dateText,
+                gender: gender,
+                duration: duration,
+                price: totalPrice,
+                status: '待预约',  // 初始状态设为"待预约"
+                createTime: new Date().toISOString(),
+                serviceTime: serviceTime,
+                booker: booker,
+                phone: phone,
+                playerName: '',    // 初始陪玩名称为空
+                playerId: ''       // 初始工号为空
+            };
+
+            // 显示订单核对弹窗
+            showBookingConfirmModal(orderInfo);
+        }
+
+        // 修改显示订单核对弹窗的函数
+        function showBookingConfirmModal(orderInfo) {
+            const modal = document.createElement('div');
+            modal.className = 'booking-modal';
+            
+            // 将 orderInfo 转换为字符串并处理特殊字符
+            const orderInfoStr = encodeURIComponent(JSON.stringify(orderInfo));
+            
+            modal.innerHTML = `
+                <div class="booking-content">
+                    <h3>
+                        <i class="material-icons" style="color: #FF6B6B;">receipt</i>
+                        订单核对
+                    </h3>
+                    <div class="booking-details">
+                        <div class="detail-item">
+                            <span class="label">订单号：</span>
+                            <span class="value">${orderInfo.orderId}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">服务项目：</span>
+                            <span class="value">${orderInfo.service}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">目的地：</span>
+                            <span class="value">${orderInfo.destination}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">陪玩日期：</span>
+                            <span class="value">${orderInfo.date}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">服务时间：</span>
+                            <span class="value">${orderInfo.serviceTime}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">服务时长：</span>
+                            <span class="value">${orderInfo.duration}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">陪玩性别：</span>
+                            <span class="value">${orderInfo.gender}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">预订人：</span>
+                            <span class="value">${orderInfo.booker}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">联系电话：</span>
+                            <span class="value">${orderInfo.phone}</span>
+                        </div>
+                        <div class="detail-item" style="margin-top: 10px;">
+                            <span class="label">费用：</span>
+                            <span class="value" style="color: #FF6B6B;">${orderInfo.price}</span>
+                        </div>
+                    </div>
+                    <div class="agreement-section">
+                        <div class="agreement-item">
+                            <input type="checkbox" id="agreementCheckbox1" class="agreement-checkbox">
+                            <label for="agreementCheckbox1">
+                                我已阅读并同意<span class="agreement-link" onclick="showNoticeModal('《陪玩下单须知》')">《陪玩下单须知》</span>
+                            </label>
+                        </div>
+                        <div class="agreement-item">
+                            <input type="checkbox" id="agreementCheckbox2" class="agreement-checkbox">
+                            <label for="agreementCheckbox2">
+                                我已阅读并同意<span class="agreement-link" onclick="showNoticeModal('《陪玩注意事项》')">《陪玩注意事项》</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button onclick="this.closest('.booking-modal').remove()" 
+                                style="flex: 1; padding: 10px; border: 1px solid #eee; background: #fff; border-radius: 8px; color: #666; cursor: pointer;">
+                            取消
+                        </button>
+                        <button onclick="confirmBooking('${orderInfoStr}')" 
+                                id="confirmBtn"
+                                style="flex: 1; padding: 10px; border: none; background: #ccc; border-radius: 8px; color: #fff; cursor: not-allowed;"
+                                disabled>
+                            确认预约
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+
+            // 添加协议勾选监听
+            const checkbox1 = document.getElementById('agreementCheckbox1');
+            const checkbox2 = document.getElementById('agreementCheckbox2');
+            const confirmBtn = document.getElementById('confirmBtn');
+
+            function updateConfirmButton() {
+                const bothChecked = checkbox1.checked && checkbox2.checked;
+                confirmBtn.disabled = !bothChecked;
+                confirmBtn.style.background = bothChecked ? '#FF6B6B' : '#ccc';
+                confirmBtn.style.cursor = bothChecked ? 'pointer' : 'not-allowed';
+            }
+
+            checkbox1.addEventListener('change', updateConfirmButton);
+            checkbox2.addEventListener('change', updateConfirmButton);
+        }
+    </script>
+</body>
+</html> 

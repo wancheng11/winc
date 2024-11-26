@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>商品详情</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f2f2f2;
+            padding-bottom: 80px;
+            height: 100vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+        }
+
+        .content {
+            margin-top: 0;
+            padding-bottom: 70px;
+            width: 359px;
+            margin: 0 auto;
+        }
+
+        .product-info,
+        .price-section,
+        .service-details {
+            width: 359px;
+            margin: 3px auto;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        .product-info {
+            background: #fff;
+            padding: 20px;
+            position: relative;
+            border-radius: 0 0 20px 20px;
+        }
+
+        .seller-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .seller-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 30px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .seller-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .seller-avatar::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #FF4B6B, #FF6B8B);
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        .seller-detail {
+            flex: 1;
+        }
+
+        .seller-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            background-image: linear-gradient(45deg, #FF4B6B, #FF6B8B);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .seller-tags {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .tag {
+            background: #f5f5f5;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .rating {
+            color: #FF9800;
+            font-size: 14px;
+        }
+
+        .price-section {
+            margin-top: 15px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .price-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #FF4B6B, #FF6B8B);
+        }
+
+        .price-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .price-title {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .price {
+            font-size: 32px;
+            font-weight: 600;
+            background: linear-gradient(45deg, #FF4B6B, #FF6B8B);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .price-unit {
+            font-size: 14px;
+            color: #999;
+            margin-left: 4px;
+            margin-bottom: 4px;
+        }
+
+        .description {
+            background: #fff;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-top: 1px solid #f5f5f5;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            z-index: 100;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .icon-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 4px;
+            color: #666;
+            font-size: 10px;
+            opacity: 0.8;
+            transition: all 0.3s;
+        }
+
+        .icon-button .material-icons {
+            font-size: 16px;
+        }
+
+        .icon-button:active {
+            opacity: 1;
+        }
+
+        .main-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .cart-btn, .buy-btn {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .cart-btn {
+            background: #FFF0F0;
+            color: #FF4B6B;
+        }
+
+        .buy-btn {
+            background: linear-gradient(45deg, #FF4B6B, #FF6B8B);
+            color: white;
+            box-shadow: 0 4px 10px rgba(255, 75, 107, 0.2);
+        }
+
+        .cart-btn:active, .buy-btn:active {
+            transform: scale(0.98);
+        }
+
+        .voice-preview {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #f5f5f5;
+            padding: 6px 12px;
+            border-radius: 20px;
+            margin-top: 10px;
+        }
+
+        .voice-wave {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            height: 15px;
+        }
+
+        .wave-bar {
+            width: 2px;
+            background: #FF6B6B;
+            border-radius: 1px;
+            animation: waveAnimation 1s ease-in-out infinite;
+        }
+
+        @keyframes waveAnimation {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(0.6); }
+        }
+
+        .game-type-tag {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(45deg, #FF4B6B, #FF6B8B);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 500;
+            box-shadow: 0 4px 10px rgba(255, 75, 107, 0.2);
+        }
+
+        .seller-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+            padding: 15px 0;
+            border-top: 1px solid #f0f0f0;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 15px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 600;
+            background: linear-gradient(45deg, #FF4B6B, #FF6B8B);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .service-details {
+            margin-top: 15px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 20px;
+        }
+
+        .detail-title {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #333;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .detail-title .material-icons {
+            font-size: 22px;
+            background: linear-gradient(45deg, #FF4B6B, #FF6B8B);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .detail-item {
+            margin-bottom: 20px;
+            padding-left: 35px;
+            position: relative;
+        }
+
+        .detail-item .material-icons {
+            position: absolute;
+            left: 0;
+            top: 2px;
+            font-size: 22px;
+            background: linear-gradient(45deg, #FF4B6B, #FF6B8B);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .detail-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .detail-content {
+            flex: 1;
+            font-size: 14px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .skill-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .skill-tag {
+            background: #f8f9fa;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #666;
+            border: 1px solid #eee;
+        }
+
+        .slide-back-area {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 20px;
+            z-index: 1000;
+        }
+
+        .notice-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .notice-item {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .notice-item .material-icons {
+            font-size: 20px;
+            color: #FF6B6B;
+            background: rgba(255, 107, 107, 0.1);
+            padding: 8px;
+            border-radius: 10px;
+        }
+
+        .notice-content {
+            flex: 1;
+        }
+
+        .notice-content h4 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .notice-content p {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        @media screen and (max-width: 320px) {
+            .content {
+                width: 100%;
+            }
+            
+            .product-info,
+            .price-section,
+            .service-details {
+                width: 100%;
+                padding: 12px;
+            }
+            
+            .bottom-bar {
+                height: 45px;
+                padding: 6px 10px;
+            }
+            
+            .icon-button {
+                font-size: 9px;
+            }
+            
+            .icon-button .material-icons {
+                font-size: 14px;
+            }
+            
+            .cart-btn, .buy-btn {
+                padding: 6px 12px;
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-back-area"></div>
+
+    <div class="content">
+        <div class="product-info">
+            <div class="game-type-tag">王者荣耀</div>
+            <div class="seller-info">
+                <div class="seller-avatar">
+                    <img src="https://s1.imagehub.cc/images/2024/11/08/517863d36cc7513386d28d457636008d.jpeg" alt="陪玩头像">
+                </div>
+                <div class="seller-detail">
+                    <div class="seller-name">小甜甜</div>
+                    <div class="seller-tags">
+                        <span class="tag">国服射手</span>
+                        <span class="tag">声优主播</span>
+                    </div>
+                    <div class="rating">⭐ 4.9 · 接单2000+</div>
+                    <div class="voice-preview">
+                        <i class="material-icons" style="color: #FF6B6B;">play_circle</i>
+                        <div class="voice-wave">
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                        </div>
+                        <span style="color: #666; font-size: 12px;">15″</span>
+                    </div>
+                </div>
+            </div>
+            <div class="seller-stats">
+                <div class="stat-item">
+                    <div class="stat-value">98%</div>
+                    <div class="stat-label">好评率</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">2000+</div>
+                    <div class="stat-label">接单数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">3年+</div>
+                    <div class="stat-label">服务经验</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="service-details">
+            <div class="detail-title">
+                <i class="material-icons">stars</i>
+                <span>服务详情</span>
+            </div>
+            <div class="detail-list">
+                <div class="detail-item">
+                    <i class="material-icons">military_tech</i>
+                    <div class="detail-content">
+                        <div>游戏段位：国服最强射手</div>
+                        <div class="skill-tags">
+                            <span class="skill-tag">百星王者</span>
+                            <span class="skill-tag">射手专精</span>
+                            <span class="skill-tag">技术流</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <i class="material-icons">schedule</i>
+                    <div class="detail-content">服务时间：9:00-23:00</div>
+                </div>
+                <div class="detail-item">
+                    <i class="material-icons">verified</i>
+                    <div class="detail-content">专业陪玩，可代练、上分、娱乐。温柔声优，陪您畅玩游戏的美好时光~</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="price-section">
+            <div class="price-header">
+                <div class="price-title">价格</div>
+                <div class="price">￥30.00<span class="price-unit"></span></div>
+            </div>
+        </div>
+
+        <div class="service-details">
+            <div class="detail-title">
+                <i class="material-icons">info</i>
+                <span>购买须知</span>
+            </div>
+            <div class="notice-list">
+                <div class="notice-item">
+                    <i class="material-icons">schedule</i>
+                    <div class="notice-content">
+                        <h4>下单时效</h4>
+                        <p>下单后2小时内必须开始服务，超时订单自动取消并退款</p>
+                    </div>
+                </div>
+                <div class="notice-item">
+                    <i class="material-icons">security</i>
+                    <div class="notice-content">
+                        <h4>安全保障</h4>
+                        <p>平台全程担保交易，确认完成后再付款给陪玩</p>
+                    </div>
+                </div>
+                <div class="notice-item">
+                    <i class="material-icons">update</i>
+                    <div class="notice-content">
+                        <h4>退款规则</h4>
+                        <p>未开服务随时可取消，开始服务后不支持退款</p>
+                    </div>
+                </div>
+                <div class="notice-item">
+                    <i class="material-icons">warning</i>
+                    <div class="notice-content">
+                        <h4>注意事项</h4>
+                        <p>严禁任何线下约见或私下交易，如有发现将永久封号</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-bar">
+        <div class="action-buttons">
+            <div class="icon-button" id="favoriteBtn">
+                <i class="material-icons">favorite_border</i>
+                <span>收藏</span>
+            </div>
+            <div class="icon-button" id="customerServiceBtn">
+                <i class="material-icons">headset_mic</i>
+                <span>客服</span>
+            </div>
+        </div>
+        <div class="main-buttons">
+            <button class="cart-btn" id="addToCartBtn">加入购物车</button>
+            <button class="buy-btn" id="buyNowBtn">立即购买</button>
+        </div>
+    </div>
+
+    <script>
+        // 收藏功能
+        let isFavorite = false;
+        const favoriteBtn = document.getElementById('favoriteBtn');
+        favoriteBtn.addEventListener('click', () => {
+            isFavorite = !isFavorite;
+            const icon = favoriteBtn.querySelector('.material-icons');
+            icon.textContent = isFavorite ? 'favorite' : 'favorite_border';
+            icon.style.color = isFavorite ? '#FF6B6B' : '#666';
+            alert(isFavorite ? '已收藏' : '已取消收藏');
+        });
+
+        // 客服功能
+        document.getElementById('customerServiceBtn').addEventListener('click', () => {
+            alert('正在连接客服...');
+        });
+
+        // 加入购物车
+        document.getElementById('addToCartBtn').addEventListener('click', () => {
+            alert('已加入购物车');
+        });
+
+        // 立即购买
+        document.getElementById('buyNowBtn').addEventListener('click', () => {
+            window.location.href = 'payment.html';
+        });
+
+        // 语音播放功能
+        const voicePreview = document.querySelector('.voice-preview');
+        let isPlaying = false;
+        voicePreview.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            const playIcon = voicePreview.querySelector('.material-icons');
+            playIcon.textContent = isPlaying ? 'pause_circle' : 'play_circle';
+            alert(isPlaying ? '播放语音...' : '暂停播放');
+        });
+
+        // 添加滑返回功能
+        let startX = 0;
+        let startY = 0;
+        const threshold = 50; // 触发返回的阈值
+
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (startX < 50) { // 只在屏幕左侧边缘检测滑动
+                const deltaX = e.touches[0].clientX - startX;
+                const deltaY = Math.abs(e.touches[0].clientY - startY);
+                
+                // 果水平滑动距离大于垂直滑动距离，阻止页面滚动
+                if (deltaX > deltaY && deltaX > 0) {
+                    e.preventDefault();
+                }
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            if (startX < 50) { // 只在屏幕左侧边缘检测滑动
+                const deltaX = e.changedTouches[0].clientX - startX;
+                const deltaY = Math.abs(e.changedTouches[0].clientY - startY);
+                
+                // 如果水平滑动距离大于阈值且大于垂直滑动距离，触发返回
+                if (deltaX > threshold && deltaX > deltaY) {
+                    history.back();
+                }
+            }
+        });
+
+        // 在页面加载时获取商品信息
+        document.addEventListener('DOMContentLoaded', function() {
+            const productInfo = JSON.parse(localStorage.getItem('currentProduct'));
+            if (productInfo) {
+                // 更新基本信息
+                document.querySelector('.seller-name').textContent = productInfo.name;
+                document.querySelector('.seller-avatar img').src = productInfo.avatar;
+                
+                // 获取游戏类型（从第一个tag中获取）
+                const gameType = Array.from(document.querySelectorAll('.tag')).find(tag => 
+                    ['王者荣耀', '英雄联盟', '和平精英', '骗子酒馆', '永劫无间'].includes(tag.textContent)
+                )?.textContent || productInfo.tags[0];
+                
+                // 更新游戏类型标签
+                document.querySelector('.game-type-tag').textContent = gameType;
+                
+                const priceElement = document.querySelector('.price');
+                const price = productInfo.price.replace('/小时/小时', '/小时');
+                priceElement.innerHTML = `${price}<span class="price-unit"></span>`;
+                
+                // 更新标签
+                const tagsHtml = productInfo.tags.map(tag => `<span class="tag">${tag}</span>`).join('');
+                document.querySelector('.seller-tags').innerHTML = tagsHtml;
+                
+                // 更新评分和订单数
+                document.querySelector('.rating').textContent = productInfo.rating;
+                
+                // 更新统计数据
+                document.querySelector('.stat-value:nth-child(1)').textContent = productInfo.stats.goodRate;
+                document.querySelector('.stat-value:nth-child(2)').textContent = productInfo.stats.orderCount;
+                document.querySelector('.stat-value:nth-child(3)').textContent = productInfo.stats.experience;
+                
+                // 更新服务时间和描述
+                document.querySelector('.detail-item:nth-child(2) .detail-content').textContent = 
+                    `服务时间：${productInfo.serviceTime}`;
+                document.querySelector('.detail-item:nth-child(3) .detail-content').textContent = 
+                    productInfo.description;
+            }
+        });
+    </script>
+</body>
+</html> 

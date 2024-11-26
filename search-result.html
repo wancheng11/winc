@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>搜索结果</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* 搜索条件栏 */
+        .search-conditions {
+            background: #fff;
+            padding: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .condition-tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .condition-tag {
+            background: #f8f8f8;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 13px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .condition-tag.active {
+            background: #FFF0F0;
+            color: #FF6B6B;
+        }
+
+        /* 陪玩列表 */
+        .content {
+            padding: 15px;
+        }
+
+        .companion-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .companion-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            gap: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .companion-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 40px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .companion-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .companion-info {
+            flex: 1;
+        }
+
+        .companion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .companion-name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .companion-price {
+            color: #FF6B6B;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .companion-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .tag {
+            background: #f5f5f5;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .companion-stats {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .online-badge {
+            background: rgba(52, 199, 89, 0.1);
+            color: #34C759;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .online-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: #34C759;
+            border-radius: 50%;
+        }
+
+        /* 返回按钮 */
+        .back-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            width: 36px;
+            height: 36px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 101;
+        }
+
+        /* 无结果提示 */
+        .no-result {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .no-result .material-icons {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #ccc;
+        }
+
+        /* 添加手势返回区域 */
+        .slide-back-area {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 20px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-back-area"></div>
+
+    <div class="search-conditions">
+        <div class="condition-tags">
+            <!-- 搜索条件将通过JS动态添加 -->
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="companion-list">
+            <!-- 陪玩列表将通过JS动态生成 -->
+        </div>
+    </div>
+
+    <script>
+        // 添加滑动返回功能
+        let startX = 0;
+        let startY = 0;
+        const threshold = 50;
+
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (startX < 50) {
+                const deltaX = e.touches[0].clientX - startX;
+                const deltaY = Math.abs(e.touches[0].clientY - startY);
+                
+                if (deltaX > deltaY && deltaX > 0) {
+                    e.preventDefault();
+                }
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            if (startX < 50) {
+                const deltaX = e.changedTouches[0].clientX - startX;
+                const deltaY = Math.abs(e.changedTouches[0].clientY - startY);
+                
+                if (deltaX > threshold && deltaX > deltaY) {
+                    history.back();
+                }
+            }
+        });
+
+        // 页面加载时显示搜索结果
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取搜索参数和结果
+            const searchParams = JSON.parse(localStorage.getItem('searchParams'));
+            const searchResults = JSON.parse(localStorage.getItem('searchResults'));
+
+            // 显示搜索条件
+            const conditionTags = document.querySelector('.condition-tags');
+            conditionTags.innerHTML = `
+                <div class="condition-tag active">${searchParams.city}</div>
+                <div class="condition-tag active">${searchParams.activityType}</div>
+                <div class="condition-tag active">${
+                    searchParams.gender === 'all' ? '不限性别' :
+                    searchParams.gender === 'male' ? '男生' : '女生'
+                }</div>
+            `;
+
+            // 显示搜索结果
+            const companionList = document.querySelector('.companion-list');
+            if (searchResults && searchResults.length > 0) {
+                companionList.innerHTML = searchResults.map(companion => `
+                    <div class="companion-card" onclick="showDetail('${companion.name}')">
+                        <div class="companion-avatar">
+                            <img src="${companion.avatar}" alt="${companion.name}">
+                        </div>
+                        <div class="companion-info">
+                            <div class="companion-header">
+                                <div class="companion-name">${companion.name}</div>
+                                <div class="companion-price">${companion.price}</div>
+                            </div>
+                            <div class="companion-tags">
+                                ${companion.tags.map(tag => `
+                                    <span class="tag">${tag}</span>
+                                `).join('')}
+                            </div>
+                            <div class="companion-stats">
+                                <span class="online-badge">在线</span>
+                                <span>${companion.orderCount}</span>
+                                <span>${companion.rating}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                companionList.innerHTML = `
+                    <div class="no-result">
+                        <i class="material-icons">search_off</i>
+                        <p>暂无符合条件的陪玩</p>
+                    </div>
+                `;
+            }
+        });
+
+        // 点击陪玩卡片跳转到详情页
+        function showDetail(name) {
+            const searchResults = JSON.parse(localStorage.getItem('searchResults'));
+            const companion = searchResults.find(item => item.name === name);
+            if (companion) {
+                localStorage.setItem('currentProduct', JSON.stringify(companion));
+                window.location.href = 'product-detail.html';
+            }
+        }
+    </script>
+</body>
+</html> 
